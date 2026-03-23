@@ -1,0 +1,24 @@
+# Already in .gitignore, but ensure they're here
+node_modules/
+.expo/
+.git/
+
+# Native project folders (can be huge)
+ios/
+android/
+
+# Build outputs and caches
+dist/
+build/
+.gradle/
+Pods/
+
+# Large assets you don't need for every build (e.g., source videos, design files)
+assets/video/
+assets/raw/
+*.psd
+*.ai
+
+# Logs and local environment files
+*.log
+.env.local

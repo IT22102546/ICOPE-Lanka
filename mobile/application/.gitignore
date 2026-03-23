@@ -1,0 +1,18 @@
+node_modules/
+.expo/
+ios/
+android/
+dist/
+build/
+*.log
+.DS_Store
+
+# Expo specific
+.expo-shared/
+expo-env.d.ts
+router.d.ts
+
+# Native folders (if using bare workflow)
+ios/Pods
+android/app/build
+android/.gradle
