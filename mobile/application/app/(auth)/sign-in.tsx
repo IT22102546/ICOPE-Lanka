@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
+  Image,
   TouchableOpacity,
   ScrollView,
   TextInput,
@@ -22,6 +23,7 @@ import Svg, { Path } from "react-native-svg";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import useAuthStore from "@/stores/authStore";
+import { images } from "@/constants";
 
 // Hospital & physiotherapy themed icons for floating header animation
 const MEDICAL_ICONS = [
@@ -403,6 +405,11 @@ const SignIn = () => {
         style={styles.topSection}
       >
         <View style={styles.iconsLayer}>{renderFloatingIcons()}</View>
+        <Image
+          source={images.IcopeLogo}
+          style={styles.headerLogo}
+          resizeMode="contain"
+        />
         <Text style={styles.header}>ICOPE Lanka</Text>
         <Text style={styles.tagline}>{isDoctorLogin ? "Doctor Portal" : "Patient Portal"}</Text>
 
@@ -581,6 +588,14 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "95%",
     zIndex: 7,
+  },
+  headerLogo: {
+    width: isSmallScreen ? 64 : 80,
+    height: isSmallScreen ? 64 : 80,
+    zIndex: 5,
+    marginBottom: 8,
+    borderRadius: 16,
+    backgroundColor: "#fff",
   },
   header: {
     fontSize: HEADER_FONT,
