@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "ArmiGo",
-    "slug": "faite",
+    "name": "ICOPE Lanka",
+    "slug": "icope-lanka",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
-    "scheme": "armigo",
+    "icon": "./assets/images/ICOPE-Logo.png",
+    "scheme": "icopelanka",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.armigo.app",
+      "bundleIdentifier": "com.icopelanka.app",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow this app to access your photo library to upload images."
       }
@@ -18,22 +18,22 @@
     "android": {
       "permissions": ["READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"],
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.png",
+        "foregroundImage": "./assets/images/ICOPE-Logo.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.armigo.app"
+      "package": "com.icopelanka.app"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/logo.png"
+      "favicon": "./assets/images/ICOPE-Logo.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/logo.png",
+          "image": "./assets/images/ICOPE-Logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
@@ -55,8 +55,8 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/LearnUpLogo.png",
-          "color": "#0057FF",
+          "icon": "./assets/images/ICOPE-Logo.png",
+          "color": "#0E7C61",
           "defaultChannel": "default"
         }
       ]

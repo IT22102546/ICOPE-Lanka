@@ -485,7 +485,7 @@ export default function Notifications() {
           </View>
           <Text style={styles.emptyTitle}>No announcements</Text>
           <Text style={styles.emptyMessage}>
-            Important announcements from ArmiGo will appear here
+            Important announcements from ICOPE Lanka will appear here
           </Text>
         </Animated.View>
       );

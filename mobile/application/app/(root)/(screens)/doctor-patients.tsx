@@ -1,12 +1,43 @@
-import { useEffect, useMemo, useState } from "react";
-import { Alert, FlatList, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+  TextInput,
+  Alert,
+  Dimensions,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import useAuthStore from "@/stores/authStore";
-import { SRI_LANKA_DISTRICTS_BY_PROVINCE, SRI_LANKA_PROVINCES, type LanguageKey } from "@/constants/elderRegistration";
 
+const { width: screenWidth } = Dimensions.get("window");
 const API = process.env.EXPO_PUBLIC_API_KEY;
 
-type Patient = {
+// ── Bilingual ────────────────────────────────────────────────────
+const TXT: Record<string, { en: string; si: string }> = {
+  brand:        { en: "ICOPE Lanka", si: "ICOPE Lanka" },
+  myPatients:   { en: "My Patients", si: "මගේ රෝගීන්" },
+  allPatients:  { en: "All Patients", si: "සියලුම රෝගීන්" },
+  search:       { en: "Search patients...", si: "රෝගීන් සොයන්න..." },
+  noPatients:   { en: "No patients found", si: "රෝගීන් හමු නොවීය" },
+  noResult:     { en: "Try adjusting your search", si: "ඔබේ සෙවීම නැවත උත්සාහ කරන්න" },
+  assess:       { en: "ICOPE Assessment", si: "ICOPE තක්සේරුව" },
+  age:          { en: "Age", si: "වයස" },
+  phone:        { en: "Phone", si: "දුරකථන" },
+  assignedTo:   { en: "Assigned to", si: "පවරා ඇත" },
+  signOut:      { en: "Sign Out", si: "පිටවීම" },
+  confirmSignOut: { en: "Are you sure you want to sign out?", si: "ඔබට පිටවීමට අවශ්‍ය බව විශ්වාසද?" },
+  cancel:       { en: "Cancel", si: "අවලංගු කරන්න" },
+  patients:     { en: "Patients", si: "රෝගීන්" },
+};
+
+interface Patient {
   _id: string;
   fullName: string;
   age?: number;
@@ -14,296 +45,251 @@ type Patient = {
   phone?: string;
   province?: string;
   district?: string;
-  doctorId?: string;
-};
+  doctorId?: { _id: string; name: string; email: string };
+}
 
 const DoctorPatients = () => {
   const router = useRouter();
+  const { currentUser, getAccessToken, signOut } = useAuthStore();
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [language, setLanguage] = useState<LanguageKey>("en");
-  const [fullName, setFullName] = useState("");
-  const [age, setAge] = useState("");
-  const [gender, setGender] = useState("Female");
-  const [phone, setPhone] = useState("");
-  const [province, setProvince] = useState("");
-  const [district, setDistrict] = useState("");
-  const [provinces, setProvinces] = useState<string[]>(SRI_LANKA_PROVINCES);
-  const [districtsByProvince, setDistrictsByProvince] = useState<Record<string, string[]>>(SRI_LANKA_DISTRICTS_BY_PROVINCE);
-  const [showProvinceList, setShowProvinceList] = useState(false);
-  const [showDistrictList, setShowDistrictList] = useState(false);
-  const { accessToken } = useAuthStore();
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showMine, setShowMine] = useState(true);
+  const [search, setSearch] = useState("");
+  const [lang, setLang] = useState<"en" | "si">("en");
+  const t = (key: string) => TXT[key]?.[lang] ?? key;
 
-  const title = useMemo(() => (language === "en" ? "Physiotherapist Elder Management" : "භෞතික චිකිත්සක වයෝවෘද්ධ කළමනාකරණය"), [language]);
-  const currentDistricts = province ? districtsByProvince[province] || [] : [];
+  const isSuperAdmin = currentUser?.role === "SUPER_ADMIN";
 
-  const loadLocationMeta = async () => {
+  const fetchPatients = useCallback(async () => {
     try {
-      const response = await fetch(`${API}/api/metadata/locations`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${accessToken}` },
+      const token = await getAccessToken();
+      if (!token) return;
+      const mineParam = isSuperAdmin && !showMine ? "" : "?mine=true";
+      const res = await fetch(`${API}/api/patients${mineParam}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (!response.ok) return;
-      const data = await response.json();
-      if (Array.isArray(data.provinces) && data.provinces.length > 0) {
-        setProvinces(data.provinces);
-      }
-      if (data.districtsByProvince && typeof data.districtsByProvince === "object") {
-        setDistrictsByProvince(data.districtsByProvince);
-      }
-    } catch {
-      // Keep local fallback when metadata endpoint is unavailable.
-    }
-  };
-
-  const fetchPatients = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${API}/api/patients`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (!response.ok) {
-        throw new Error("Unable to load patients");
-      }
-      const data = await response.json();
+      if (!res.ok) throw new Error("Failed to fetch");
+      const data = await res.json();
       setPatients(data.patients || []);
-    } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to load patients");
+    } catch (err: any) {
+      console.error("Fetch patients error:", err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [showMine, isSuperAdmin]);
 
   useEffect(() => {
+    setLoading(true);
     fetchPatients();
-    loadLocationMeta();
-  }, []);
+  }, [fetchPatients]);
 
-  const addPatient = async () => {
-    if (!fullName.trim()) {
-      Alert.alert("Validation", "Patient name is required");
-      return;
-    }
+  const filtered = patients.filter((p) =>
+    p.fullName?.toLowerCase().includes(search.toLowerCase()) ||
+    p.phone?.includes(search) ||
+    p.district?.toLowerCase().includes(search.toLowerCase())
+  );
 
-    if (!age || Number(age) <= 0) {
-      Alert.alert("Validation", "Valid age is required");
-      return;
-    }
+  const handleSignOut = () => {
+    Alert.alert(t("signOut"), t("confirmSignOut"), [
+      { text: t("cancel"), style: "cancel" },
+      { text: t("signOut"), style: "destructive", onPress: async () => { await signOut(); router.replace("/(auth)/selectSignIn"); } },
+    ]);
+  };
 
-    if (!phone.trim()) {
-      Alert.alert("Validation", "Mobile number is required");
-      return;
-    }
+  const renderPatientCard = ({ item }: { item: Patient }) => {
+    const initials = item.fullName
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase() || "?";
 
-    if (!province || !district) {
-      Alert.alert("Validation", "Province and district are required");
-      return;
-    }
+    const genderColor = item.gender === "Male" ? "#3B82F6" : item.gender === "Female" ? "#EC4899" : "#6B7280";
 
-    try {
-      const response = await fetch(`${API}/api/patients`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          fullName: fullName.trim(),
-          age: Number(age),
-          gender,
-          phone: phone.trim(),
-          province,
-          district,
-        }),
-      });
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        activeOpacity={0.7}
+        onPress={() => router.push({ pathname: "/(root)/(screens)/patient-assessment", params: { patientId: item._id, patientName: item.fullName } })}
+      >
+        <View style={styles.cardRow}>
+          {/* Avatar */}
+          <View style={[styles.avatar, { backgroundColor: genderColor + "20" }]}>
+            <Text style={[styles.avatarText, { color: genderColor }]}>{initials}</Text>
+          </View>
 
-      if (!response.ok) {
-        throw new Error("Failed to add patient");
-      }
+          {/* Info */}
+          <View style={styles.cardInfo}>
+            <Text style={styles.patientName} numberOfLines={1}>{item.fullName}</Text>
+            <View style={styles.detailRow}>
+              {item.age != null && (
+                <View style={styles.chip}>
+                  <Ionicons name="calendar-outline" size={12} color="#666" />
+                  <Text style={styles.chipText}>{t("age")}: {item.age}</Text>
+                </View>
+              )}
+              {item.gender && (
+                <View style={[styles.chip, { backgroundColor: genderColor + "15" }]}>
+                  <Text style={[styles.chipText, { color: genderColor }]}>{item.gender}</Text>
+                </View>
+              )}
+            </View>
+            {item.phone && (
+              <View style={styles.detailRow}>
+                <Ionicons name="call-outline" size={12} color="#888" />
+                <Text style={styles.detailText}>{item.phone}</Text>
+              </View>
+            )}
+            {item.district && item.province && (
+              <View style={styles.detailRow}>
+                <Ionicons name="location-outline" size={12} color="#888" />
+                <Text style={styles.detailText}>{item.district}, {item.province}</Text>
+              </View>
+            )}
+            {isSuperAdmin && !showMine && item.doctorId?.name && (
+              <View style={styles.detailRow}>
+                <Ionicons name="person-outline" size={12} color="#0E7C61" />
+                <Text style={[styles.detailText, { color: "#0E7C61" }]}>{t("assignedTo")}: {item.doctorId.name}</Text>
+              </View>
+            )}
+          </View>
 
-      setModalOpen(false);
-      setFullName("");
-      setAge("");
-      setGender("Female");
-      setPhone("");
-      setProvince("");
-      setDistrict("");
-      fetchPatients();
-    } catch (error: any) {
-      Alert.alert("Error", error.message || "Unable to add patient");
-    }
+          {/* Arrow */}
+          <View style={styles.assessBtn}>
+            <Ionicons name="chevron-forward" size={20} color="#0E7C61" />
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.subtitle}>
-        {language === "en"
-          ? "Select an elder or register a new elder under this physiotherapist."
-          : "මෙම භෞතික චිකිත්සකයා යටතේ නව වයෝවෘද්ධයෙක් ලියාපදිංචි කරන්න හෝ පවතින අයෙකු තෝරන්න."}
-      </Text>
-
-      <View style={styles.langRow}>
-        <TouchableOpacity style={[styles.langBtn, language === "en" && styles.langBtnActive]} onPress={() => setLanguage("en")}>
-          <Text style={[styles.langText, language === "en" && styles.langTextActive]}>English</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.langBtn, language === "si" && styles.langBtnActive]} onPress={() => setLanguage("si")}>
-          <Text style={[styles.langText, language === "si" && styles.langTextActive]}>සිංහල</Text>
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity style={styles.primaryBtn} onPress={() => setModalOpen(true)}>
-        <Text style={styles.primaryBtnText}>{language === "en" ? "Register Elder" : "වයෝවෘද්ධ ලියාපදිංචි කරන්න"}</Text>
-      </TouchableOpacity>
-
-      <FlatList
-        data={patients}
-        keyExtractor={(item: Patient) => item._id}
-        refreshing={loading}
-        onRefresh={fetchPatients}
-        contentContainerStyle={styles.listWrap}
-        renderItem={({ item }: { item: Patient }) => (
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() => router.push({ pathname: "/(root)/(screens)/patient-assessment", params: { patientId: item._id, patientName: item.fullName } })}
-          >
-            <Text style={styles.cardTitle}>{item.fullName}</Text>
-            <Text style={styles.cardDesc}>Age: {item.age || "-"} | Gender: {item.gender || "-"}</Text>
-            <Text style={styles.cardDesc}>Mobile: {item.phone || "-"}</Text>
-            <Text style={styles.cardDesc}>Location: {item.province || "-"} / {item.district || "-"}</Text>
-            <View style={styles.cardCtaWrap}>
-              <Text style={styles.cardCta}>{language === "en" ? "Continue ICOPE Assessment" : "ICOPE ඇගයීම අඛණ්ඩ කරන්න"}</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={<Text style={styles.empty}>{language === "en" ? "No elders found yet." : "තවම වයෝවෘද්ධයන් සොයාගත නොහැක."}</Text>}
-      />
-
-      <Modal visible={modalOpen} transparent animationType="slide" onRequestClose={() => setModalOpen(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalContent}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={styles.modalTitle}>{language === "en" ? "Register Elder" : "වයෝවෘද්ධ ලියාපදිංචි කිරීම"}</Text>
-              <TextInput placeholder={language === "en" ? "Full Name" : "සම්පූර්ණ නම"} style={styles.input} value={fullName} onChangeText={setFullName} />
-              <TextInput placeholder={language === "en" ? "Age" : "වයස"} keyboardType="number-pad" style={styles.input} value={age} onChangeText={setAge} />
-              <TextInput placeholder={language === "en" ? "Mobile Number" : "දුරකථන අංකය"} keyboardType="phone-pad" style={styles.input} value={phone} onChangeText={setPhone} />
-
-              <TouchableOpacity style={styles.dropdown} onPress={() => { setShowProvinceList((v) => !v); setShowDistrictList(false); }}>
-                <Text style={styles.dropdownText}>{province || (language === "en" ? "Select Province" : "පළාත තෝරන්න")}</Text>
-              </TouchableOpacity>
-              {showProvinceList && (
-                <View style={styles.dropdownList}>
-                  {provinces.map((item) => (
-                    <TouchableOpacity
-                      key={item}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setProvince(item);
-                        setDistrict("");
-                        setShowProvinceList(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>{item}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-
-              <TouchableOpacity
-                style={styles.dropdown}
-                onPress={() => {
-                  if (!province) {
-                    Alert.alert("Select province", "Please choose a province first");
-                    return;
-                  }
-                  setShowDistrictList((v) => !v);
-                }}
-              >
-                <Text style={styles.dropdownText}>{district || (language === "en" ? "Select District" : "දිස්ත්‍රික්කය තෝරන්න")}</Text>
-              </TouchableOpacity>
-              {showDistrictList && (
-                <View style={styles.dropdownList}>
-                  {currentDistricts.map((item) => (
-                    <TouchableOpacity
-                      key={item}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setDistrict(item);
-                        setShowDistrictList(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>{item}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-
-              <View style={styles.genderRow}>
-                {[
-                  { label: language === "en" ? "Female" : "ස්ත්‍රී", value: "Female" },
-                  { label: language === "en" ? "Male" : "පුරුෂ", value: "Male" },
-                  { label: language === "en" ? "Other" : "වෙනත්", value: "Other" },
-                ].map((g) => (
-                  <TouchableOpacity key={g.value} style={[styles.genderBtn, gender === g.value && styles.genderBtnActive]} onPress={() => setGender(g.value)}>
-                    <Text style={[styles.genderTxt, gender === g.value && styles.genderTxtActive]}>{g.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.secondaryBtn} onPress={() => setModalOpen(false)}>
-                  <Text style={styles.secondaryTxt}>{language === "en" ? "Cancel" : "අවලංගු"}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.primaryBtnSmall} onPress={addPatient}>
-                  <Text style={styles.primaryBtnText}>{language === "en" ? "Save Elder" : "වයෝවෘද්ධයෙක් සුරකින්න"}</Text>
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
+      {/* Header */}
+      <LinearGradient colors={["#0E7C61", "#14A87D"]} style={styles.header}>
+        <View style={styles.headerTop}>
+          <View>
+            <Text style={styles.brandText}>{t("brand")}</Text>
+            <Text style={styles.welcomeName}>{currentUser?.name || "Physiotherapist"}</Text>
+          </View>
+          <View style={styles.headerActions}>
+            <TouchableOpacity onPress={() => setLang(lang === "en" ? "si" : "en")} style={styles.langBtn}>
+              <Ionicons name="language-outline" size={18} color="#fff" />
+              <Text style={styles.langLabel}>{lang === "en" ? "සිං" : "EN"}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleSignOut} style={styles.signOutBtn}>
+              <Ionicons name="log-out-outline" size={20} color="#fff" />
+            </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+
+        {/* Super admin toggle */}
+        {isSuperAdmin && (
+          <View style={styles.toggleRow}>
+            <TouchableOpacity
+              style={[styles.toggleBtn, showMine && styles.toggleActive]}
+              onPress={() => setShowMine(true)}
+            >
+              <Ionicons name="person" size={16} color={showMine ? "#0E7C61" : "#fff"} />
+              <Text style={[styles.toggleText, showMine && styles.toggleTextActive]}>{t("myPatients")}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toggleBtn, !showMine && styles.toggleActive]}
+              onPress={() => setShowMine(false)}
+            >
+              <Ionicons name="people" size={16} color={!showMine ? "#0E7C61" : "#fff"} />
+              <Text style={[styles.toggleText, !showMine && styles.toggleTextActive]}>{t("allPatients")}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </LinearGradient>
+
+      {/* Search */}
+      <View style={styles.searchRow}>
+        <Ionicons name="search-outline" size={18} color="#888" />
+        <TextInput
+          style={styles.searchInput}
+          placeholder={t("search")}
+          placeholderTextColor="#999"
+          value={search}
+          onChangeText={setSearch}
+          autoCapitalize="none"
+        />
+        {search !== "" && (
+          <TouchableOpacity onPress={() => setSearch("")}>
+            <Ionicons name="close-circle" size={18} color="#999" />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Count */}
+      <View style={styles.countRow}>
+        <Text style={styles.countText}>
+          {filtered.length} {t("patients")}
+        </Text>
+      </View>
+
+      {/* List */}
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color="#0E7C61" />
+        </View>
+      ) : filtered.length === 0 ? (
+        <View style={styles.center}>
+          <Ionicons name="people-outline" size={56} color="#ccc" />
+          <Text style={styles.emptyTitle}>{t("noPatients")}</Text>
+          <Text style={styles.emptyDesc}>{t("noResult")}</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item._id}
+          renderItem={renderPatientCard}
+          contentContainerStyle={styles.list}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchPatients(); }} tintColor="#0E7C61" />}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8fafc", padding: 16 },
-  title: { fontSize: 24, color: "#0f172a", fontFamily: "Poppins-Bold" },
-  subtitle: { marginTop: 4, color: "#475569", fontFamily: "Poppins-Regular" },
-  langRow: { marginTop: 10, flexDirection: "row", gap: 8 },
-  langBtn: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 10, borderWidth: 1, borderColor: "#cbd5e1", backgroundColor: "#fff" },
-  langBtnActive: { backgroundColor: "#dbeafe", borderColor: "#2563eb" },
-  langText: { color: "#334155", fontFamily: "Poppins-Regular" },
-  langTextActive: { color: "#1d4ed8", fontFamily: "Poppins-SemiBold" },
-  primaryBtn: { marginTop: 14, backgroundColor: "#2563eb", padding: 12, borderRadius: 12, alignItems: "center" },
-  primaryBtnSmall: { backgroundColor: "#2563eb", paddingVertical: 10, paddingHorizontal: 18, borderRadius: 10 },
-  primaryBtnText: { color: "#fff", fontFamily: "Poppins-SemiBold" },
-  listWrap: { paddingTop: 14, paddingBottom: 20 },
-  card: { backgroundColor: "#fff", borderRadius: 12, padding: 12, marginBottom: 10 },
-  cardTitle: { fontSize: 17, color: "#0f172a", fontFamily: "Poppins-SemiBold" },
-  cardDesc: { marginTop: 3, color: "#475569", fontFamily: "Poppins-Regular" },
-  cardCtaWrap: { marginTop: 10, alignSelf: "flex-start", backgroundColor: "#e0f2fe", paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
-  cardCta: { color: "#0c4a6e", fontFamily: "Poppins-SemiBold", fontSize: 12 },
-  empty: { color: "#64748b", textAlign: "center", marginTop: 20, fontFamily: "Poppins-Regular" },
-  modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.35)" },
-  modalContent: { backgroundColor: "#fff", padding: 16, borderTopLeftRadius: 18, borderTopRightRadius: 18, maxHeight: "88%" },
-  modalTitle: { fontSize: 19, color: "#0f172a", marginBottom: 12, fontFamily: "Poppins-Bold" },
-  input: { borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 10, fontFamily: "Poppins-Regular" },
-  dropdown: { borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 12, marginBottom: 10, backgroundColor: "#fff" },
-  dropdownText: { color: "#334155", fontFamily: "Poppins-Regular" },
-  dropdownList: { borderWidth: 1, borderColor: "#dbe3ee", borderRadius: 10, marginTop: -6, marginBottom: 10, backgroundColor: "#f8fafc" },
-  dropdownItem: { paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#e2e8f0" },
-  dropdownItemText: { color: "#0f172a", fontFamily: "Poppins-Regular" },
-  genderRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
-  genderBtn: { borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, paddingVertical: 7, paddingHorizontal: 12 },
-  genderBtnActive: { backgroundColor: "#dbeafe", borderColor: "#2563eb" },
-  genderTxt: { color: "#334155", fontFamily: "Poppins-Regular" },
-  genderTxtActive: { color: "#1d4ed8", fontFamily: "Poppins-SemiBold" },
-  actionRow: { flexDirection: "row", justifyContent: "space-between" },
-  secondaryBtn: { backgroundColor: "#e2e8f0", paddingVertical: 10, paddingHorizontal: 18, borderRadius: 10 },
-  secondaryTxt: { color: "#0f172a", fontFamily: "Poppins-SemiBold" },
+  container: { flex: 1, backgroundColor: "#f5f5f5" },
+  header: { paddingTop: 50, paddingHorizontal: 20, paddingBottom: 20 },
+  headerTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  brandText: { color: "rgba(255,255,255,0.8)", fontSize: 13, fontFamily: "Poppins-Medium" },
+  welcomeName: { color: "#fff", fontSize: 20, fontFamily: "Poppins-Bold", marginTop: 2 },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 10 },
+  langBtn: { flexDirection: "row", alignItems: "center", backgroundColor: "rgba(255,255,255,0.2)", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16, gap: 4 },
+  langLabel: { color: "#fff", fontSize: 12, fontFamily: "Poppins-SemiBold" },
+  signOutBtn: { padding: 6, backgroundColor: "rgba(255,255,255,0.2)", borderRadius: 16 },
+  toggleRow: { flexDirection: "row", backgroundColor: "rgba(255,255,255,0.15)", borderRadius: 12, padding: 4, marginTop: 16 },
+  toggleBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 10, borderRadius: 10, gap: 6 },
+  toggleActive: { backgroundColor: "#fff" },
+  toggleText: { color: "#fff", fontSize: 14, fontFamily: "Poppins-SemiBold" },
+  toggleTextActive: { color: "#0E7C61" },
+  searchRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff", margin: 16, marginBottom: 0, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: "#e5e5e5" },
+  searchInput: { flex: 1, marginLeft: 8, fontSize: 14, fontFamily: "Poppins-Regular", color: "#333", paddingVertical: 2 },
+  countRow: { paddingHorizontal: 20, paddingVertical: 10 },
+  countText: { color: "#888", fontSize: 13, fontFamily: "Poppins-Medium" },
+  list: { paddingHorizontal: 16, paddingBottom: 30 },
+  card: { backgroundColor: "#fff", borderRadius: 16, padding: 16, marginBottom: 12, shadowColor: "#000", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 3 },
+  cardRow: { flexDirection: "row", alignItems: "center" },
+  avatar: { width: 48, height: 48, borderRadius: 24, justifyContent: "center", alignItems: "center" },
+  avatarText: { fontSize: 18, fontFamily: "Poppins-Bold" },
+  cardInfo: { flex: 1, marginLeft: 12 },
+  patientName: { fontSize: 16, fontFamily: "Poppins-SemiBold", color: "#222", marginBottom: 4 },
+  detailRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
+  chip: { flexDirection: "row", alignItems: "center", backgroundColor: "#f0f0f0", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, gap: 4, marginRight: 6 },
+  chipText: { fontSize: 11, fontFamily: "Poppins-Medium", color: "#666" },
+  detailText: { fontSize: 12, fontFamily: "Poppins-Regular", color: "#888" },
+  assessBtn: { padding: 8, backgroundColor: "#E8F5E9", borderRadius: 12 },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  emptyTitle: { fontSize: 17, fontFamily: "Poppins-SemiBold", color: "#999", marginTop: 12 },
+  emptyDesc: { fontSize: 13, fontFamily: "Poppins-Regular", color: "#bbb", marginTop: 4 },
 });
 
 export default DoctorPatients;

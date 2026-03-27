@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   ScrollView,
   TextInput,
@@ -18,14 +17,38 @@ import {
 import { Controller, useForm } from "react-hook-form";
 import { Ionicons } from "@expo/vector-icons";
 import CheckBox from "expo-checkbox";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import Svg, { Path } from "react-native-svg";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import useAuthStore from "@/stores/authStore";
-import { images } from "@/constants";
 
-// Hospital & physiotherapy themed icons for floating header animation
+// ── Bilingual text ───────────────────────────────────────────────
+const TXT: Record<string, { en: string; si: string }> = {
+  brand:       { en: "ICOPE Lanka", si: "ICOPE Lanka" },
+  tagline:     { en: "Physiotherapist Portal", si: "භෞතචිකිත්සක ද්වාරය" },
+  welcome:     { en: "Welcome Back", si: "සාදරයෙන් පිළිගනිමු" },
+  subtitle:    { en: "Sign in with your admin-provided credentials", si: "පරිපාලක ලබා දුන් අක්තපත්‍ර සමඟ පිවිසෙන්න" },
+  emailLabel:  { en: "Email or Phone Number", si: "විද්‍යුත් තැපෑල හෝ දුරකථන අංකය" },
+  emailPh:     { en: "Enter your email or phone number", si: "ඔබේ විද්‍යුත් තැපෑල ඇතුලත් කරන්න" },
+  passLabel:   { en: "Password", si: "මුරපදය" },
+  passPh:      { en: "Enter Your Password", si: "ඔබේ මුරපදය ඇතුලත් කරන්න" },
+  remember:    { en: "Remember Me", si: "මතක තබා ගන්න" },
+  signIn:      { en: "Sign In", si: "පිවිසෙන්න" },
+  adminNote:   { en: "Your account credentials are provided by your hospital administrator.", si: "ඔබේ ගිණුම් තොරතුරු ඔබේ රෝහල් පරිපාලක විසින් ලබා දෙනු ලැබේ." },
+  emailReq:    { en: "Email or phone number is required", si: "විද්‍යුත් තැපෑල හෝ දුරකථන අංකය අවශ්‍යයි" },
+  passReq:     { en: "Password is required", si: "මුරපදය අවශ්‍යයි" },
+  invalidId:   { en: "Please enter a valid email or phone number", si: "වලංගු විද්‍යුත් තැපෑලක් හෝ දුරකථන අංකයක් ඇතුලත් කරන්න" },
+  usingEmail:  { en: "Using email to sign in", si: "විද්‍යුත් තැපෑලෙන් පිවිසෙමින්" },
+  usingPhone:  { en: "Using phone number to sign in", si: "දුරකථන අංකයෙන් පිවිසෙමින්" },
+  accessDenied:{ en: "Access Denied", si: "ප්‍රවේශය ප්‍රතික්ෂේප විය" },
+  accessMsg:   { en: "This account does not have physiotherapist or admin access.", si: "මෙම ගිණුමට භෞතචිකිත්සක හෝ පරිපාලක ප්‍රවේශය නැත." },
+  incorrectPw: { en: "Incorrect password", si: "වැරදි මුරපදය" },
+  signInError: { en: "Sign In Error", si: "පිවිසුම් දෝෂය" },
+  errorMsg:    { en: "Failed to sign in. Please check your connection.", si: "පිවිසීමට අසමත් විය. කරුණාකර ඔබේ සම්බන්ධතාවය පරීක්ෂා කරන්න." },
+};
+
 const MEDICAL_ICONS = [
   "fitness-outline", "heart-outline", "pulse-outline",
   "medkit-outline", "body-outline", "barbell-outline",
@@ -34,37 +57,29 @@ const MEDICAL_ICONS = [
   "pulse", "medkit", "body",
 ] as const;
 
-// Explicit 4-row grid – icons evenly spread, no clustering
 const ICON_POSITIONS = [
-  // Row 1 – top strip
   { name: "fitness-outline",      top: 12,  leftPct:  3, size: 20, baseOpacity: 0.60, rotation:  -5 },
   { name: "heart-outline",        top: 18,  leftPct: 22, size: 16, baseOpacity: 0.55, rotation:   8 },
   { name: "pulse-outline",        top: 10,  leftPct: 44, size: 18, baseOpacity: 0.50, rotation:  -3 },
   { name: "medkit-outline",       top: 20,  leftPct: 68, size: 22, baseOpacity: 0.60, rotation:   6 },
   { name: "body-outline",         top: 14,  leftPct: 88, size: 20, baseOpacity: 0.65, rotation:  -8 },
-  // Row 2 – upper-mid
   { name: "barbell-outline",      top: 68,  leftPct:  5, size: 22, baseOpacity: 0.65, rotation:   5 },
   { name: "walk-outline",         top: 72,  leftPct: 48, size: 18, baseOpacity: 0.55, rotation:  10 },
   { name: "bandage-outline",      top: 62,  leftPct: 84, size: 20, baseOpacity: 0.60, rotation:  -6 },
-  // Row 3 – mid
   { name: "stopwatch-outline",    top: 122, leftPct:  3, size: 20, baseOpacity: 0.60, rotation:   7 },
   { name: "heart-circle-outline", top: 130, leftPct: 27, size: 18, baseOpacity: 0.55, rotation:  -4 },
   { name: "fitness",              top: 120, leftPct: 60, size: 22, baseOpacity: 0.65, rotation:   3 },
   { name: "heart",                top: 128, leftPct: 84, size: 20, baseOpacity: 0.60, rotation:  -7 },
-  // Row 4 – lower strip
   { name: "pulse",                top: 175, leftPct:  7, size: 20, baseOpacity: 0.60, rotation:   4 },
   { name: "medkit",               top: 178, leftPct: 45, size: 18, baseOpacity: 0.55, rotation:  -5 },
   { name: "body",                 top: 170, leftPct: 80, size: 22, baseOpacity: 0.65, rotation:   6 },
 ];
 
-// ─── Responsive helpers ──────────────────────────────────────────
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 const isSmallScreen = screenHeight < 700;
 const TOP_H         = Math.round(screenHeight * (isSmallScreen ? 0.28 : screenHeight < 850 ? 0.30 : 0.32));
 const HEADER_FONT   = isSmallScreen ? 24 : 30;
 const TAGLINE_MB    = isSmallScreen ? 28 : 50;
-const _it = (base: number): number => Math.round((base / 230) * TOP_H);
-// ─────────────────────────────────────────────────────────────────
 
 const API = process.env.EXPO_PUBLIC_API_KEY;
 
@@ -156,6 +171,7 @@ const getIconName = (value: string): string => {
 };
 
 const SignIn = () => {
+  const insets = useSafeAreaInsets();
   const {
     control,
     handleSubmit,
@@ -174,16 +190,16 @@ const SignIn = () => {
   const [secureText, setSecureText] = useState(true);
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [lang, setLang] = useState<"en" | "si">("en");
   const [apiErrors, setApiErrors] = useState({
     identifier: "",
     password: "",
   });
+  const t = (key: string) => TXT[key]?.[lang] ?? key;
   
   const identifierValue = watch("identifier");
   const router = useRouter();
-  const { role } = useLocalSearchParams<{ role?: string }>();
   const { signIn } = useAuthStore();
-  const isDoctorLogin = String(role || "").toLowerCase() === "doctor";
 
   const animatedValues = useRef(
     MEDICAL_ICONS.map(() => new Animated.Value(0))
@@ -283,7 +299,7 @@ const SignIn = () => {
         formattedIdentifier = formatPhoneNumber(credentials.identifier);
       }
 
-      console.log("📤 Sending parent login request:", { identifier: formattedIdentifier });
+      console.log("📤 Sending physiotherapist login request:", { identifier: formattedIdentifier });
 
       const response = await fetch(`${API}/api/auth/login`, {
         method: "POST",
@@ -294,9 +310,7 @@ const SignIn = () => {
         body: JSON.stringify({
           identifier: formattedIdentifier,
           password: credentials.password,
-          allowedRoles: isDoctorLogin
-            ? ["PHYSIOTHERAPIST", "SUPER_ADMIN", "DOCTOR"]
-            : ["PARENT", "INTERNAL_PARENT", "EXTERNAL_PARENT"],
+          allowedRoles: ["PHYSIOTHERAPIST", "SUPER_ADMIN"],
         }),
       });
 
@@ -307,14 +321,12 @@ const SignIn = () => {
         const message = errorData.message || "Invalid credentials. Please try again.";
         if (message.toLowerCase().includes("role") || message.toLowerCase().includes("not allowed")) {
           Alert.alert(
-            "Access Denied",
-            isDoctorLogin
-              ? "This account does not have doctor access. Please contact the super admin."
-              : "This account does not have patient access. Please contact your hospital administrator.",
+            t("accessDenied"),
+            t("accessMsg"),
             [{ text: "OK" }]
           );
         } else if (message.toLowerCase().includes("password") || message.toLowerCase().includes("credential")) {
-          setError("password", { type: "manual", message: "Incorrect password" });
+          setError("password", { type: "manual", message: t("incorrectPw") });
         } else {
           setError("identifier", { type: "manual", message: message });
         }
@@ -343,11 +355,11 @@ const SignIn = () => {
         await AsyncStorage.multiRemove(["rememberMe", "savedIdentifier", "savedPassword"]);
       }
 
-      console.log("✅ Sign in successful!");
-      router.replace(isDoctorLogin ? "/(root)/(screens)/doctor-patients" : "/(root)/(tabs)/home");
+      console.log("✅ Physiotherapist sign in successful!");
+      router.replace("/(root)/(screens)/doctor-patients");
     } catch (error: any) {
       console.error("❌ Sign in error:", error);
-      Alert.alert("Sign In Error", error.message || "Failed to sign in. Please check your connection.");
+      Alert.alert(t("signInError"), error.message || t("errorMsg"));
     } finally {
       setLoading(false);
     }
@@ -398,25 +410,31 @@ const SignIn = () => {
 
   return (
     <View style={styles.container}>
+      {/* Green background behind status bar */}
+      <View style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top, backgroundColor: "#0E7C61", zIndex: 10 }} />
+
+      {/* Language toggle */}
+      <View style={{ position: "absolute", top: insets.top + 8, right: 16, zIndex: 99 }}>
+        <TouchableOpacity onPress={() => setLang(lang === "en" ? "si" : "en")} style={{ flexDirection: "row", alignItems: "center", backgroundColor: "rgba(0,0,0,0.25)", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, gap: 4 }}>
+          <Ionicons name="language-outline" size={18} color="#fff" />
+          <Text style={{ color: "#fff", fontFamily: "Poppins-SemiBold", fontSize: 13 }}>{lang === "en" ? "සිං" : "EN"}</Text>
+        </TouchableOpacity>
+      </View>
+
       <LinearGradient
-        colors={["#4B3AFF", "#5C6CFF"]}
+        colors={["#0E7C61", "#14A87D"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.topSection}
+        style={[styles.topSection, { paddingTop: insets.top }]}
       >
         <View style={styles.iconsLayer}>{renderFloatingIcons()}</View>
-        <Image
-          source={images.IcopeLogo}
-          style={styles.headerLogo}
-          resizeMode="contain"
-        />
-        <Text style={styles.header}>ICOPE Lanka</Text>
-        <Text style={styles.tagline}>{isDoctorLogin ? "Doctor Portal" : "Patient Portal"}</Text>
+        <Text style={styles.header}>{t("brand")}</Text>
+        <Text style={styles.tagline}>{t("tagline")}</Text>
 
         <View style={styles.lightBlueWaveContainer}>
           <Svg height="92" width="100%" viewBox="0 0 1440 320">
             <Path
-              fill="#4B9BFF"
+              fill="#3CC8A1"
               d="M0,180L48,170C96,160,192,140,288,130C384,120,480,120,576,135C672,150,768,180,864,190C960,200,1056,190,1152,175C1248,160,1344,130,1392,115L1440,100L1440,320L0,320Z"
             />
           </Svg>
@@ -440,8 +458,8 @@ const SignIn = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headingContainer}>
-          <Text style={styles.welcomeText}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in with your admin-provided credentials</Text>
+          <Text style={styles.welcomeText}>{t("welcome")}</Text>
+          <Text style={styles.subtitle}>{t("subtitle")}</Text>
         </View>
 
         <View style={styles.formContainer}>
@@ -449,13 +467,13 @@ const SignIn = () => {
             control={control}
             name="identifier"
             rules={{
-              required: "Email or phone number is required",
-              validate: (value) => isValidIdentifier(value) || "Please enter a valid email or phone number",
+              required: t("emailReq"),
+              validate: (value) => isValidIdentifier(value) || t("invalidId"),
             }}
             render={({ field: { onChange, value } }) => (
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>
-                  Email or Phone Number <Text style={styles.required}>*</Text>
+                  {t("emailLabel")} <Text style={styles.required}>*</Text>
                 </Text>
                 <View style={[styles.inputWrapper, { borderColor: getInputBorderColor("identifier") }]}>
                   <Ionicons
@@ -485,7 +503,7 @@ const SignIn = () => {
                 )}
                 {value && !errors.identifier && (
                   <Text style={styles.identifierTypeText}>
-                    {isLikelyEmail(value) ? "Using email to sign in" : "Using phone number to sign in"}
+                    {isLikelyEmail(value) ? t("usingEmail") : t("usingPhone")}
                   </Text>
                 )}
               </View>
@@ -495,11 +513,11 @@ const SignIn = () => {
           <Controller
             control={control}
             name="password"
-            rules={{ required: "Password is required" }}
+            rules={{ required: t("passReq") }}
             render={({ field: { onChange, value } }) => (
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>
-                  Password <Text style={styles.required}>*</Text>
+                  {t("passLabel")} <Text style={styles.required}>*</Text>
                 </Text>
                 <View style={[styles.inputWrapper, { borderColor: getInputBorderColor("password") }]}>
                   <Ionicons
@@ -508,7 +526,7 @@ const SignIn = () => {
                     color={errors.password || apiErrors.password ? "#ef4444" : "gray"}
                   />
                   <TextInput
-                    placeholder="Enter Your Password"
+                    placeholder={t("passPh")}
                     placeholderTextColor="#9ca3af"
                     secureTextEntry={secureText}
                     value={value}
@@ -544,7 +562,7 @@ const SignIn = () => {
                 onValueChange={setRememberMe}
                 color={rememberMe ? "#2563eb" : undefined}
               />
-              <Text style={styles.rememberMeText}>Remember Me</Text>
+              <Text style={styles.rememberMeText}>{t("remember")}</Text>
             </View>
           </View>
 
@@ -556,12 +574,12 @@ const SignIn = () => {
             {loading ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text style={styles.signInText}>Sign In</Text>
+              <Text style={styles.signInText}>{t("signIn")}</Text>
             )}
           </TouchableOpacity>
 
           <Text style={styles.adminNoteText}>
-            Your account credentials are provided by your hospital administrator.
+            {t("adminNote")}
           </Text>
         </View>
       </ScrollView>
@@ -588,14 +606,6 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "95%",
     zIndex: 7,
-  },
-  headerLogo: {
-    width: isSmallScreen ? 64 : 80,
-    height: isSmallScreen ? 64 : 80,
-    zIndex: 5,
-    marginBottom: 8,
-    borderRadius: 16,
-    backgroundColor: "#fff",
   },
   header: {
     fontSize: HEADER_FONT,
@@ -633,6 +643,8 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
+    marginTop: -2,
+    backgroundColor: "#fff",
   },
   headingContainer: {
     alignItems: "center",
@@ -735,7 +747,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   signInButton: {
-    backgroundColor: "#3b82f6",
+    backgroundColor: "#0E7C61",
     paddingVertical: isSmallScreen ? 12 : 16,
     borderRadius: 12,
     alignItems: "center",

@@ -225,16 +225,14 @@ const ScreenLayout = () => {
         <Stack.Screen
           name="doctor-patients"
           options={{
-            headerShown: true,
-            title: "Doctor Patients",
+            headerShown: false,
           }}
         />
 
         <Stack.Screen
           name="patient-assessment"
           options={{
-            headerShown: true,
-            title: "ICOPE Assessment",
+            headerShown: false,
           }}
         />
       </Stack>

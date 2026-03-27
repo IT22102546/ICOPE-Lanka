@@ -75,6 +75,7 @@ import requests from "@/assets/icons/requests.png";
 
 // IMAGES
 import LearnupLogo from "@/assets/images/LearnUpLogo.png";
+import ICOPELogo from "@/assets/images/ICOPE-Logo.png";
 import Onboard from "@/assets/images/onboard.png";
 import Onboard01 from "@/assets/images/OnBoard1.png";
 import Onboard02 from "@/assets/images/OnBoard2.png";
@@ -96,7 +97,6 @@ import Forgot2 from "@/assets/images/forgot2.png";
 import Forgot3 from "@/assets/images/forgot3.png";
 import PassSucess from "@/assets/images/passsucess.png";
 import test from "@/assets/images/test.png";
-import IcopeLogo from "@/assets/images/logo.png";
 import instruction1 from "@/assets/images/exam_ins.png";
 import rule_eye from "@/assets/images/rule_eye.png";
 import rule_face from "@/assets/images/rule_face.png";
@@ -108,6 +108,7 @@ import rule_timer from "@/assets/images/rule_timer.png";
 // EXPORT IMAGES
 export const images = {
   LearnupLogo,
+  ICOPELogo,
   Onboard,
   Onboard01,
   Onboard02,
@@ -126,7 +127,6 @@ export const images = {
   Forgot3,
   PassSucess,
   test,
-  IcopeLogo,
   instruction1,
   results,
   rule_eye,

@@ -46,7 +46,7 @@ const Layout = () => {
           headerShown: false,
         }}
       >
-        {/* ArmiGo Parent App — onboarding + sign-in only */}
+        {/* ICOPE Lanka — onboarding + role selection + sign-in */}
         <Stack.Screen name="onBoard1" options={{ headerShown: false }} />
         <Stack.Screen name="onBoard2" options={{ headerShown: false }} />
         <Stack.Screen name="onBoard3" options={{ headerShown: false }} />
