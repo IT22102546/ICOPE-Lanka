@@ -696,18 +696,45 @@ td p { margin: 0; }
 .modalActions { margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
 
 /* ── Detail grid (patient modal) ────────────────────── */
-.detailGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.di { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 4px; background: var(--surface-2); }
+.detailGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.di {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 6px;
+  background: var(--surface-2);
+}
 .di-full { grid-column: 1 / -1; }
 .dk { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.di span:last-child { color: var(--text); font-weight: 500; line-height: 1.35; }
 
 /* ── Assessment cards ───────────────────────────────── */
 .assTitle { font-size: 14px; font-weight: 700; margin: 18px 0 10px; }
-.assCard  { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-top: 8px; }
+.assCard  { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-top: 8px; background: var(--surface-2); }
 .assCardHead { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
 .assDate  { color: var(--muted); font-size: 12px; }
 .assBadges { display: flex; flex-wrap: wrap; gap: 5px; }
-.assNote  { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+.assNote  { margin: 8px 0 0; color: color-mix(in srgb, var(--text) 70%, var(--muted)); font-size: 13px; }
+
+.appRoot[data-theme="dark"] .di {
+  background: #152133;
+  border-color: #324760;
+}
+
+.appRoot[data-theme="dark"] .dk {
+  color: #c4d3e6;
+}
+
+.appRoot[data-theme="dark"] .assCard {
+  background: #152133;
+  border-color: #324760;
+}
+
+.appRoot[data-theme="dark"] .assDate,
+.appRoot[data-theme="dark"] .assNote {
+  color: #c4d3e6;
+}
 
 /* ── Login — full page split layout ───────────────────────────── */
 .loginRoot {
