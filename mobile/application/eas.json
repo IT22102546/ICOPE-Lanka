@@ -1,0 +1,47 @@
+{
+  "cli": {
+    "version": ">= 14.5.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug"
+      },
+      "env": {
+        "EXPO_PUBLIC_NODE_STORAGE_URL": "http://192.168.117.109:3000/uploads",
+        "EXPO_PUBLIC_API_KEY": "http://192.168.117.109:3000"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
+      },
+      "env": {
+        "EXPO_PUBLIC_NODE_STORAGE_URL": "http://192.168.117.109:3000/uploads",
+        "EXPO_PUBLIC_API_KEY": "http://192.168.117.109:3000"
+      }
+    },
+    "production": {
+      "android": {
+       "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
+        
+      },
+      "env": {
+        "EXPO_PUBLIC_API_KEY":"https://api.armigorehab.com",
+        "EXPO_PUBLIC_NODE_STORAGE_URL":"https://api.armigorehab.com/uploads",
+        "EXPO_PUBLIC_API_URL":"https://api.armigorehab.com"
+      },
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

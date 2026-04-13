@@ -1,0 +1,62 @@
+/* eslint-disable prettier/prettier */
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import "react-native-reanimated";
+import { useFonts } from "expo-font";
+import { useEffect } from "react";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
+import { Platform } from "react-native";
+
+// Prevent the splash screen from auto-hiding before asset loading is complete.
+SplashScreen.preventAutoHideAsync();
+
+const Layout = () => {
+  const [fontsLoaded, error] = useFonts({
+    "Poppins-Regular": require("../../assets/fonts/Poppins-Regular.ttf"),
+    "Poppins-Bold": require("../../assets/fonts/Poppins-Bold.ttf"),
+    "Poppins-SemiBold": require("../../assets/fonts/Poppins-SemiBold.ttf"),
+    "Poppins-Medium": require("../../assets/fonts/Poppins-Medium.ttf"),
+    "Poppins-Light": require("../../assets/fonts/Poppins-Light.ttf"),
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || error) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, error]);
+
+  if (!fontsLoaded && !error) {
+    return null;
+  }
+
+  return (
+    <SafeAreaProvider>
+      <StatusBar style="auto" />
+      <Stack
+        screenOptions={{
+          // This helps with system navigation bar
+          contentStyle: {
+            flex: 1,
+            backgroundColor: "#fff", // or your app's background color
+          },
+          // Prevent gestures interfering with system navigation
+          gestureEnabled: Platform.OS === "ios", // Enable gestures only for iOS
+          // Full screen for Android to avoid system nav bar issues
+          headerShown: false,
+        }}
+      >
+        {/* ICOPE Lanka — onboarding + role selection + sign-in */}
+        <Stack.Screen name="onBoard1" options={{ headerShown: false }} />
+        <Stack.Screen name="onBoard2" options={{ headerShown: false }} />
+        <Stack.Screen name="onBoard3" options={{ headerShown: false }} />
+        <Stack.Screen name="selectSignIn" options={{ headerShown: false }} />
+        <Stack.Screen name="patient-coming-soon" options={{ headerShown: false }} />
+        <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack>
+    </SafeAreaProvider>
+  );
+};
+
+export default Layout;
