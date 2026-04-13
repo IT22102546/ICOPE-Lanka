@@ -507,33 +507,6 @@ const OnBoard3: React.FC = () => {
 
         {/* Bottom Content Section with Image */}
         <View style={styles.bottomSection}>
-          {/* Animated Triangle - rotates on swipe right */}
-          <Animated.View style={[styles.triangleContainer, triangleTransform]}>
-            <Image
-              source={images.Traingle2}
-              style={styles.triangle}
-              resizeMode="contain"
-            />
-          </Animated.View>
-
-          {/* Animated Vector - moves toward screen on swipe right (NO rotation) */}
-          <Animated.View style={[styles.vectorContainer, vectorTransform]}>
-            <Image
-              source={images.Eclips2} // Using Eclips2 image as per your setup
-              style={styles.vector}
-              resizeMode="contain"
-            />
-          </Animated.View>
-
-          {/* Animated Eclipse - moves toward screen on swipe right (NO rotation) */}
-          <Animated.View style={[styles.eclipseContainer, eclipseTransform]}>
-            <Image
-              source={images.Vector2} // Using Vector2 image as per your setup
-              style={styles.eclipse}
-              resizeMode="contain"
-            />
-          </Animated.View>
-
           {/* Light blue-gray colored filled circle around the onboard image */}
           <View style={styles.circleContainer}>
             <Svg width={240} height={240} style={styles.ashCircle}>
@@ -723,36 +696,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#353434",
     fontFamily: "Poppins-Bold",
-  },
-  triangleContainer: {
-    position: "absolute",
-    top: -10,
-    left: 40,
-    zIndex: 1,
-  },
-  triangle: {
-    width: 60,
-    height: 60,
-  },
-  vectorContainer: {
-    position: "absolute",
-    top: 3,
-    right: -7,
-    zIndex: 1,
-  },
-  vector: {
-    width: 80,
-    height: 120,
-  },
-  eclipseContainer: {
-    position: "absolute",
-    bottom: 150,
-    left: -30,
-    zIndex: 1,
-  },
-  eclipse: {
-    width: 100,
-    height: 100,
   },
   circleContainer: {
     position: "absolute",

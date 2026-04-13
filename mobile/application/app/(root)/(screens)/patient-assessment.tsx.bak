@@ -11,7 +11,6 @@ import {
   Dimensions,
   Switch,
   Vibration,
-  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -19,9 +18,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import useAuthStore from "@/stores/authStore";
 
 const API = process.env.EXPO_PUBLIC_API_KEY;
-const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
-const sc = (size: number) => Math.round((screenWidth / 390) * size);
-const vs = (size: number) => Math.round((screenHeight / 844) * size);
+const { width: screenWidth } = Dimensions.get("window");
 
 // ── Bilingual ────────────────────────────────────────────────────
 const TXT: Record<string, { en: string; si: string }> = {
@@ -450,7 +447,7 @@ const PatientAssessment = () => {
   // ── Reusable option button ─────────────────────────────────────
   const OptBtn = ({ label, sel, onPress, color = "#0E7C61" }: { label: string; sel: boolean; onPress: () => void; color?: string }) => (
     <TouchableOpacity onPress={onPress} style={[styles.optBtn, sel && { backgroundColor: color + "15", borderColor: color }]} activeOpacity={0.7}>
-      {sel && <Ionicons name="checkmark-circle" size={sc(16)} color={color} style={{ marginRight: sc(5) }} />}
+      {sel && <Ionicons name="checkmark-circle" size={16} color={color} style={{ marginRight: 5 }} />}
       <Text style={[styles.optBtnText, sel && { color, fontFamily: "Poppins-SemiBold" }]}>{label}</Text>
     </TouchableOpacity>
   );
@@ -461,13 +458,13 @@ const PatientAssessment = () => {
     return (
       <TouchableOpacity style={[styles.domainHeader, isOpen && { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }]} onPress={() => setExpanded(isOpen ? null : domain.key)} activeOpacity={0.7}>
         <View style={[styles.domainIcon, { backgroundColor: domain.color + "15" }]}>
-          <Ionicons name={domain.icon as any} size={sc(22)} color={domain.color} />
+          <Ionicons name={domain.icon as any} size={22} color={domain.color} />
         </View>
         <View style={styles.domainHeaderText}>
           <Text style={styles.domainTitle}>{t(domain.key)}</Text>
           <Text style={styles.domainDesc}>{t(domain.key + "Desc")}</Text>
         </View>
-        <Ionicons name={isOpen ? "chevron-up" : "chevron-down"} size={sc(20)} color="#999" />
+        <Ionicons name={isOpen ? "chevron-up" : "chevron-down"} size={20} color="#999" />
       </TouchableOpacity>
     );
   };
@@ -481,14 +478,13 @@ const PatientAssessment = () => {
       <LinearGradient colors={["#0E7C61", "#14A87D"]} style={styles.header}>
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={sc(22)} color="#fff" />
+            <Ionicons name="arrow-back" size={22} color="#fff" />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle}>{t("assessment")}</Text>
             <Text style={styles.headerPatient}>{params.patientName || ""}</Text>
           </View>
           <TouchableOpacity onPress={() => setLang(lang === "en" ? "si" : "en")} style={styles.headerLangBtn}>
-            <Ionicons name="language-outline" size={sc(18)} color="#fff" />
             <Text style={styles.headerLangText}>{lang === "en" ? "සිං" : "EN"}</Text>
           </TouchableOpacity>
         </View>
@@ -509,7 +505,7 @@ const PatientAssessment = () => {
                 {!recallPhase ? (
                   <>
                     <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#6366F1" }]} onPress={() => setWordsVisible(!wordsVisible)}>
-                      <Ionicons name={wordsVisible ? "eye-off" : "eye"} size={sc(20)} color="#fff" />
+                      <Ionicons name={wordsVisible ? "eye-off" : "eye"} size={20} color="#fff" />
                       <Text style={styles.actionBtnText}>{wordsVisible ? t("hideWords") : t("showWords")}</Text>
                     </TouchableOpacity>
                     {wordsVisible && (
@@ -522,8 +518,8 @@ const PatientAssessment = () => {
                         ))}
                       </View>
                     )}
-                    <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#4F46E5", marginTop: sc(10) }]} onPress={() => { setWordsVisible(false); setRecallPhase(true); }}>
-                      <Ionicons name="help-circle-outline" size={sc(20)} color="#fff" />
+                    <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#4F46E5", marginTop: 10 }]} onPress={() => { setWordsVisible(false); setRecallPhase(true); }}>
+                      <Ionicons name="help-circle-outline" size={20} color="#fff" />
                       <Text style={styles.actionBtnText}>{t("askRecall")}</Text>
                     </TouchableOpacity>
                   </>
@@ -538,7 +534,7 @@ const PatientAssessment = () => {
                         </View>
                       ))}
                     </View>
-                    <Text style={[styles.fieldLabel, { marginTop: sc(12) }]}>{t("wordsRecalled")}</Text>
+                    <Text style={[styles.fieldLabel, { marginTop: 12 }]}>{t("wordsRecalled")}</Text>
                     <View style={styles.recallRow}>
                       {[0, 1, 2, 3].map((n) => (
                         <TouchableOpacity key={n} style={[styles.recallBtn, wordsRecalled === n && { backgroundColor: "#6366F1", borderColor: "#6366F1" }]} onPress={() => setWordsRecalled(n)}>
@@ -551,7 +547,7 @@ const PatientAssessment = () => {
               </View>
 
               {/* Clock Drawing */}
-              <View style={[styles.testBox, { marginTop: sc(12) }]}>
+              <View style={[styles.testBox, { marginTop: 12 }]}>
                 <Text style={styles.testTitle}>{t("clockDrawing")}</Text>
                 <Text style={styles.testInstr}>{t("clockInstr")}</Text>
                 <View style={styles.row}>
@@ -562,7 +558,7 @@ const PatientAssessment = () => {
 
               {form.cognitionScore !== "" && (
                 <View style={styles.scoreBadge}>
-                  <Ionicons name="calculator-outline" size={sc(18)} color="#6366F1" />
+                  <Ionicons name="calculator-outline" size={18} color="#6366F1" />
                   <Text style={styles.scoreText}>{t("autoScore")}: {form.cognitionScore}/30</Text>
                 </View>
               )}
@@ -589,17 +585,17 @@ const PatientAssessment = () => {
                 <View style={styles.timerRow}>
                   {!timerRunning ? (
                     <TouchableOpacity style={[styles.timerBtn, { backgroundColor: "#10B981" }]} onPress={startTimer}>
-                      <Ionicons name="play" size={sc(22)} color="#fff" />
+                      <Ionicons name="play" size={22} color="#fff" />
                       <Text style={styles.timerBtnText}>{t("startTimer")}</Text>
                     </TouchableOpacity>
                   ) : (
                     <TouchableOpacity style={[styles.timerBtn, { backgroundColor: "#EF4444" }]} onPress={stopTimer}>
-                      <Ionicons name="stop" size={sc(22)} color="#fff" />
+                      <Ionicons name="stop" size={22} color="#fff" />
                       <Text style={styles.timerBtnText}>{t("stopTimer")}</Text>
                     </TouchableOpacity>
                   )}
                   <TouchableOpacity style={[styles.timerBtn, { backgroundColor: "#6B7280" }]} onPress={resetTimer}>
-                    <Ionicons name="refresh" size={sc(20)} color="#fff" />
+                    <Ionicons name="refresh" size={20} color="#fff" />
                     <Text style={styles.timerBtnText}>{t("resetTimer")}</Text>
                   </TouchableOpacity>
                 </View>
@@ -672,7 +668,7 @@ const PatientAssessment = () => {
 
               {form.mnaScore !== "" && (
                 <View style={styles.scoreBadge}>
-                  <Ionicons name="calculator-outline" size={sc(18)} color="#10B981" />
+                  <Ionicons name="calculator-outline" size={18} color="#10B981" />
                   <Text style={styles.scoreText}>{t("mnaTotal")}: {form.mnaScore}/14</Text>
                 </View>
               )}
@@ -709,13 +705,13 @@ const PatientAssessment = () => {
                   <Text style={styles.whisperNumber}>{whisperNum}</Text>
                 </View>
 
-                <Text style={[styles.fieldLabel, { marginTop: sc(16), fontSize: sc(15), fontFamily: "Poppins-SemiBold" }]}>{t("leftEar")}</Text>
+                <Text style={[styles.fieldLabel, { marginTop: 16, fontSize: 15, fontFamily: "Poppins-SemiBold" }]}>{t("leftEar")}</Text>
                 <View style={styles.btnRow}>
                   <OptBtn label={t("couldHear")} sel={hearL === "heard"} onPress={() => setHearL("heard")} color="#10B981" />
                   <OptBtn label={t("partially")} sel={hearL === "partial"} onPress={() => setHearL("partial")} color="#F59E0B" />
                   <OptBtn label={t("couldNotHear")} sel={hearL === "not_heard"} onPress={() => setHearL("not_heard")} color="#EF4444" />
                 </View>
-                <Text style={[styles.fieldLabel, { marginTop: sc(12), fontSize: sc(15), fontFamily: "Poppins-SemiBold" }]}>{t("rightEar")}</Text>
+                <Text style={[styles.fieldLabel, { marginTop: 12, fontSize: 15, fontFamily: "Poppins-SemiBold" }]}>{t("rightEar")}</Text>
                 <View style={styles.btnRow}>
                   <OptBtn label={t("couldHear")} sel={hearR === "heard"} onPress={() => setHearR("heard")} color="#10B981" />
                   <OptBtn label={t("partially")} sel={hearR === "partial"} onPress={() => setHearR("partial")} color="#F59E0B" />
@@ -751,16 +747,16 @@ const PatientAssessment = () => {
                   <Text style={styles.fingerLabel}>{t("howMany")}</Text>
                 </View>
                 <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#8B5CF6" }]} onPress={() => setFingerCount(Math.floor(Math.random() * 5) + 1)}>
-                  <Ionicons name="shuffle" size={sc(20)} color="#fff" />
+                  <Ionicons name="shuffle" size={20} color="#fff" />
                   <Text style={styles.actionBtnText}>{t("newFingers")}</Text>
                 </TouchableOpacity>
 
-                <Text style={[styles.fieldLabel, { marginTop: sc(16), fontSize: sc(15), fontFamily: "Poppins-SemiBold" }]}>{t("leftEye")}</Text>
+                <Text style={[styles.fieldLabel, { marginTop: 16, fontSize: 15, fontFamily: "Poppins-SemiBold" }]}>{t("leftEye")}</Text>
                 <View style={styles.btnRow}>
                   <OptBtn label={t("correct")} sel={visL === true} onPress={() => setVisL(true)} color="#10B981" />
                   <OptBtn label={t("incorrect")} sel={visL === false} onPress={() => setVisL(false)} color="#EF4444" />
                 </View>
-                <Text style={[styles.fieldLabel, { marginTop: sc(12), fontSize: sc(15), fontFamily: "Poppins-SemiBold" }]}>{t("rightEye")}</Text>
+                <Text style={[styles.fieldLabel, { marginTop: 12, fontSize: 15, fontFamily: "Poppins-SemiBold" }]}>{t("rightEye")}</Text>
                 <View style={styles.btnRow}>
                   <OptBtn label={t("correct")} sel={visR === true} onPress={() => setVisR(true)} color="#10B981" />
                   <OptBtn label={t("incorrect")} sel={visR === false} onPress={() => setVisR(false)} color="#EF4444" />
@@ -842,7 +838,7 @@ const PatientAssessment = () => {
 
               {form.gdsScore !== "" && (
                 <View style={styles.scoreBadge}>
-                  <Ionicons name="calculator-outline" size={sc(18)} color="#EC4899" />
+                  <Ionicons name="calculator-outline" size={18} color="#EC4899" />
                   <Text style={styles.scoreText}>{t("gdsScore")}: {form.gdsScore}/4</Text>
                 </View>
               )}
@@ -860,7 +856,7 @@ const PatientAssessment = () => {
           {expanded === "carePlan" && (
             <View style={styles.domainBody}>
               <Text style={styles.fieldLabel}>{t("recommendations")}</Text>
-              <TextInput style={[styles.input, styles.multiline, { minHeight: sc(80) }]} multiline value={form.careRecommendations} onChangeText={(v) => updateForm("careRecommendations", v)} placeholderTextColor="#bbb" />
+              <TextInput style={[styles.input, styles.multiline, { minHeight: 80 }]} multiline value={form.careRecommendations} onChangeText={(v) => updateForm("careRecommendations", v)} placeholderTextColor="#bbb" />
               <Text style={styles.fieldLabel}>{t("followUp")} (YYYY-MM-DD)</Text>
               <TextInput style={styles.input} value={form.followUpDate} onChangeText={(v) => updateForm("followUpDate", v)} placeholder="2026-04-15" placeholderTextColor="#bbb" />
               <View style={styles.switchRow}>
@@ -881,14 +877,14 @@ const PatientAssessment = () => {
         <View style={styles.historySection}>
           <Text style={styles.historyTitle}>{t("history")}</Text>
           {loadingHistory ? (
-            <ActivityIndicator color="#0E7C61" style={{ marginTop: sc(12) }} />
+            <ActivityIndicator color="#0E7C61" style={{ marginTop: 12 }} />
           ) : history.length === 0 ? (
             <Text style={styles.historyEmpty}>{t("noHistory")}</Text>
           ) : (
             history.slice(0, 5).map((a, i) => (
               <View key={a._id || i} style={styles.historyCard}>
                 <View style={styles.historyRow}>
-                  <Ionicons name="calendar-outline" size={sc(14)} color="#0E7C61" />
+                  <Ionicons name="calendar-outline" size={14} color="#0E7C61" />
                   <Text style={styles.historyDate}>{new Date(a.createdAt).toLocaleDateString()}</Text>
                 </View>
                 <View style={styles.historyChipRow}>
@@ -907,14 +903,14 @@ const PatientAssessment = () => {
           <LinearGradient colors={["#0E7C61", "#14A87D"]} style={styles.submitGradient}>
             {submitting ? <ActivityIndicator color="#fff" /> : (
               <>
-                <Ionicons name="checkmark-circle-outline" size={sc(22)} color="#fff" />
+                <Ionicons name="checkmark-circle-outline" size={22} color="#fff" />
                 <Text style={styles.submitText}>{t("submit")}</Text>
               </>
             )}
           </LinearGradient>
         </TouchableOpacity>
 
-        <View style={{ height: sc(40) }} />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
@@ -922,98 +918,98 @@ const PatientAssessment = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f5f5" },
-  header: { paddingTop: Platform.OS === "ios" ? vs(54) : vs(42), paddingHorizontal: sc(16), paddingBottom: sc(16) },
+  header: { paddingTop: 50, paddingHorizontal: 16, paddingBottom: 16 },
   headerRow: { flexDirection: "row", alignItems: "center" },
-  backBtn: { padding: sc(8), backgroundColor: "rgba(255,255,255,0.2)", borderRadius: sc(12) },
-  headerCenter: { flex: 1, marginLeft: sc(12) },
-  headerTitle: { color: "#fff", fontSize: sc(18), fontFamily: "Poppins-Bold" },
-  headerPatient: { color: "rgba(255,255,255,0.85)", fontSize: sc(13), fontFamily: "Poppins-Regular" },
-  headerLangBtn: { flexDirection: "row", alignItems: "center", backgroundColor: "rgba(255,255,255,0.2)", paddingHorizontal: sc(10), paddingVertical: sc(5), borderRadius: sc(16), gap: sc(4) },
-  headerLangText: { color: "#fff", fontSize: sc(12), fontFamily: "Poppins-SemiBold" },
-  scrollContent: { padding: sc(16) },
-  domainCard: { backgroundColor: "#fff", borderRadius: sc(16), marginBottom: sc(12), overflow: "hidden", ...Platform.select({ ios: { shadowColor: "#000", shadowOpacity: 0.05, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8 }, android: { elevation: 2 } }) },
-  domainHeader: { flexDirection: "row", alignItems: "center", padding: sc(16), borderRadius: sc(16) },
-  domainIcon: { width: sc(44), height: sc(44), borderRadius: sc(12), justifyContent: "center", alignItems: "center" },
-  domainHeaderText: { flex: 1, marginLeft: sc(12) },
-  domainTitle: { fontSize: sc(16), fontFamily: "Poppins-SemiBold", color: "#222" },
-  domainDesc: { fontSize: sc(12), fontFamily: "Poppins-Regular", color: "#888" },
-  domainBody: { paddingHorizontal: sc(16), paddingBottom: sc(16) },
-  fieldLabel: { fontSize: sc(13), fontFamily: "Poppins-Medium", color: "#555", marginTop: sc(12), marginBottom: sc(6) },
-  input: { backgroundColor: "#f9f9f9", borderWidth: 1, borderColor: "#e5e5e5", borderRadius: sc(10), paddingHorizontal: sc(14), paddingVertical: sc(10), fontSize: sc(14), fontFamily: "Poppins-Regular", color: "#333" },
-  multiline: { minHeight: sc(56), textAlignVertical: "top" },
-  row: { flexDirection: "row", gap: sc(12) },
+  backBtn: { padding: 8, backgroundColor: "rgba(255,255,255,0.2)", borderRadius: 12 },
+  headerCenter: { flex: 1, marginLeft: 12 },
+  headerTitle: { color: "#fff", fontSize: 18, fontFamily: "Poppins-Bold" },
+  headerPatient: { color: "rgba(255,255,255,0.85)", fontSize: 13, fontFamily: "Poppins-Regular" },
+  headerLangBtn: { backgroundColor: "rgba(255,255,255,0.2)", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 16 },
+  headerLangText: { color: "#fff", fontSize: 12, fontFamily: "Poppins-SemiBold" },
+  scrollContent: { padding: 16 },
+  domainCard: { backgroundColor: "#fff", borderRadius: 16, marginBottom: 12, overflow: "hidden", shadowColor: "#000", shadowOpacity: 0.05, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2 },
+  domainHeader: { flexDirection: "row", alignItems: "center", padding: 16, borderRadius: 16 },
+  domainIcon: { width: 44, height: 44, borderRadius: 12, justifyContent: "center", alignItems: "center" },
+  domainHeaderText: { flex: 1, marginLeft: 12 },
+  domainTitle: { fontSize: 16, fontFamily: "Poppins-SemiBold", color: "#222" },
+  domainDesc: { fontSize: 12, fontFamily: "Poppins-Regular", color: "#888" },
+  domainBody: { paddingHorizontal: 16, paddingBottom: 16 },
+  fieldLabel: { fontSize: 13, fontFamily: "Poppins-Medium", color: "#555", marginTop: 12, marginBottom: 6 },
+  input: { backgroundColor: "#f9f9f9", borderWidth: 1, borderColor: "#e5e5e5", borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, fontFamily: "Poppins-Regular", color: "#333" },
+  multiline: { minHeight: 56, textAlignVertical: "top" },
+  row: { flexDirection: "row", gap: 12 },
   halfField: { flex: 1 },
-  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: sc(6) },
-  statusChip: { paddingHorizontal: sc(10), paddingVertical: sc(6), borderRadius: sc(8), borderWidth: 1, borderColor: "#e5e5e5", backgroundColor: "#fafafa" },
-  statusChipText: { fontSize: sc(11), fontFamily: "Poppins-Regular", color: "#777" },
-  switchRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: sc(12) },
-  switchLabel: { fontSize: sc(14), fontFamily: "Poppins-Regular", color: "#555" },
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  statusChip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: "#e5e5e5", backgroundColor: "#fafafa" },
+  statusChipText: { fontSize: 11, fontFamily: "Poppins-Regular", color: "#777" },
+  switchRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12 },
+  switchLabel: { fontSize: 14, fontFamily: "Poppins-Regular", color: "#555" },
 
   // Interactive test styles
-  testBox: { backgroundColor: "#F8FAFC", borderRadius: sc(12), padding: sc(14), borderWidth: 1, borderColor: "#E2E8F0" },
-  testTitle: { fontSize: sc(15), fontFamily: "Poppins-SemiBold", color: "#334155", marginBottom: sc(4) },
-  testInstr: { fontSize: sc(13), fontFamily: "Poppins-Regular", color: "#64748B", lineHeight: sc(20), marginBottom: sc(12) },
-  actionBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sc(8), paddingVertical: sc(12), borderRadius: sc(12), marginTop: sc(8) },
-  actionBtnText: { color: "#fff", fontSize: sc(15), fontFamily: "Poppins-SemiBold" },
-  optBtn: { flexDirection: "row", alignItems: "center", paddingVertical: sc(10), paddingHorizontal: sc(14), borderRadius: sc(10), borderWidth: 1.5, borderColor: "#d1d5db", backgroundColor: "#fafafa", marginBottom: sc(6) },
-  optBtnText: { fontSize: sc(14), fontFamily: "Poppins-Regular", color: "#555", flexShrink: 1 },
-  btnRow: { flexDirection: "row", flexWrap: "wrap", gap: sc(8) },
+  testBox: { backgroundColor: "#F8FAFC", borderRadius: 12, padding: 14, borderWidth: 1, borderColor: "#E2E8F0" },
+  testTitle: { fontSize: 15, fontFamily: "Poppins-SemiBold", color: "#334155", marginBottom: 4 },
+  testInstr: { fontSize: 13, fontFamily: "Poppins-Regular", color: "#64748B", lineHeight: 20, marginBottom: 12 },
+  actionBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 12, borderRadius: 12, marginTop: 8 },
+  actionBtnText: { color: "#fff", fontSize: 15, fontFamily: "Poppins-SemiBold" },
+  optBtn: { flexDirection: "row", alignItems: "center", paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1.5, borderColor: "#d1d5db", backgroundColor: "#fafafa", marginBottom: 6 },
+  optBtnText: { fontSize: 14, fontFamily: "Poppins-Regular", color: "#555" },
+  btnRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
 
   // Word recall
-  wordRow: { flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: sc(10), marginTop: sc(12) },
-  wordBadge: { backgroundColor: "#EEF2FF", borderRadius: sc(12), paddingHorizontal: sc(16), paddingVertical: sc(12), alignItems: "center", borderWidth: 1, borderColor: "#C7D2FE", minWidth: sc(80) },
-  wordNum: { fontSize: sc(11), fontFamily: "Poppins-SemiBold", color: "#6366F1", marginBottom: sc(2) },
-  wordText: { fontSize: sc(18), fontFamily: "Poppins-Bold", color: "#4338CA" },
-  recallRow: { flexDirection: "row", gap: sc(8), marginTop: sc(8) },
-  recallBtn: { flex: 1, paddingVertical: sc(12), borderRadius: sc(10), borderWidth: 1.5, borderColor: "#d1d5db", alignItems: "center", backgroundColor: "#fafafa" },
-  recallBtnText: { fontSize: sc(14), fontFamily: "Poppins-SemiBold", color: "#555" },
+  wordRow: { flexDirection: "row", justifyContent: "center", gap: 12, marginTop: 12 },
+  wordBadge: { backgroundColor: "#EEF2FF", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, alignItems: "center", borderWidth: 1, borderColor: "#C7D2FE" },
+  wordNum: { fontSize: 11, fontFamily: "Poppins-SemiBold", color: "#6366F1", marginBottom: 2 },
+  wordText: { fontSize: 18, fontFamily: "Poppins-Bold", color: "#4338CA" },
+  recallRow: { flexDirection: "row", gap: 8, marginTop: 8 },
+  recallBtn: { flex: 1, paddingVertical: 12, borderRadius: 10, borderWidth: 1.5, borderColor: "#d1d5db", alignItems: "center", backgroundColor: "#fafafa" },
+  recallBtnText: { fontSize: 14, fontFamily: "Poppins-SemiBold", color: "#555" },
 
   // TUG timer
-  timerDisplay: { alignItems: "center", marginVertical: sc(16), backgroundColor: "#FFF7ED", borderRadius: sc(16), paddingVertical: sc(20), paddingHorizontal: sc(16), borderWidth: 1, borderColor: "#FED7AA" },
-  timerNumber: { fontSize: sc(48), fontFamily: "Poppins-Bold", color: "#EA580C", fontVariant: ["tabular-nums"], includeFontPadding: false },
-  timerUnit: { fontSize: sc(14), fontFamily: "Poppins-Regular", color: "#9A3412", marginTop: sc(4) },
-  timerRow: { flexDirection: "row", gap: sc(10), marginTop: sc(8) },
-  timerBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sc(6), paddingVertical: sc(14), borderRadius: sc(12) },
-  timerBtnText: { color: "#fff", fontSize: sc(15), fontFamily: "Poppins-SemiBold" },
+  timerDisplay: { alignItems: "center", marginVertical: 16, backgroundColor: "#FFF7ED", borderRadius: 16, padding: 20, borderWidth: 1, borderColor: "#FED7AA" },
+  timerNumber: { fontSize: 48, fontFamily: "Poppins-Bold", color: "#EA580C", fontVariant: ["tabular-nums"] },
+  timerUnit: { fontSize: 14, fontFamily: "Poppins-Regular", color: "#9A3412", marginTop: 4 },
+  timerRow: { flexDirection: "row", gap: 10, marginTop: 8 },
+  timerBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 14, borderRadius: 12 },
+  timerBtnText: { color: "#fff", fontSize: 15, fontFamily: "Poppins-SemiBold" },
 
   // MNA-SF questions
-  questionBox: { marginBottom: sc(14), backgroundColor: "#fff", borderRadius: sc(10), padding: sc(12), borderWidth: 1, borderColor: "#E5E7EB" },
-  questionText: { fontSize: sc(14), fontFamily: "Poppins-SemiBold", color: "#374151", marginBottom: sc(8), lineHeight: sc(22) },
+  questionBox: { marginBottom: 14, backgroundColor: "#fff", borderRadius: 10, padding: 12, borderWidth: 1, borderColor: "#E5E7EB" },
+  questionText: { fontSize: 14, fontFamily: "Poppins-SemiBold", color: "#374151", marginBottom: 8, lineHeight: 22 },
 
   // Hearing whisper
-  whisperDisplay: { alignItems: "center", marginVertical: sc(12), backgroundColor: "#EFF6FF", borderRadius: sc(16), paddingVertical: sc(16), paddingHorizontal: sc(20), borderWidth: 1, borderColor: "#BFDBFE" },
-  whisperLabel: { fontSize: sc(13), fontFamily: "Poppins-Regular", color: "#2563EB", marginBottom: sc(4) },
-  whisperNumber: { fontSize: sc(40), fontFamily: "Poppins-Bold", color: "#1E40AF" },
+  whisperDisplay: { alignItems: "center", marginVertical: 12, backgroundColor: "#EFF6FF", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "#BFDBFE" },
+  whisperLabel: { fontSize: 13, fontFamily: "Poppins-Regular", color: "#2563EB", marginBottom: 4 },
+  whisperNumber: { fontSize: 40, fontFamily: "Poppins-Bold", color: "#1E40AF" },
 
   // Vision finger count
-  fingerDisplay: { alignItems: "center", marginVertical: sc(16), backgroundColor: "#F5F3FF", borderRadius: sc(16), paddingVertical: sc(20), paddingHorizontal: sc(24), borderWidth: 1, borderColor: "#DDD6FE" },
-  fingerNumber: { fontSize: sc(64), fontFamily: "Poppins-Bold", color: "#7C3AED", includeFontPadding: false },
-  fingerLabel: { fontSize: sc(14), fontFamily: "Poppins-Regular", color: "#6D28D9", marginTop: sc(4) },
+  fingerDisplay: { alignItems: "center", marginVertical: 16, backgroundColor: "#F5F3FF", borderRadius: 16, padding: 20, borderWidth: 1, borderColor: "#DDD6FE" },
+  fingerNumber: { fontSize: 64, fontFamily: "Poppins-Bold", color: "#7C3AED" },
+  fingerLabel: { fontSize: 14, fontFamily: "Poppins-Regular", color: "#6D28D9", marginTop: 4 },
 
   // GDS-4
-  gdsQuestion: { marginBottom: sc(14) },
-  gdsQuestionText: { fontSize: sc(14), fontFamily: "Poppins-SemiBold", color: "#374151", marginBottom: sc(8), lineHeight: sc(22) },
-  gdsRow: { flexDirection: "row", gap: sc(10) },
-  gdsBtn: { flex: 1, paddingVertical: sc(12), borderRadius: sc(10), borderWidth: 1.5, borderColor: "#d1d5db", alignItems: "center", backgroundColor: "#fafafa" },
-  gdsBtnText: { fontSize: sc(15), fontFamily: "Poppins-SemiBold", color: "#555" },
+  gdsQuestion: { marginBottom: 14 },
+  gdsQuestionText: { fontSize: 14, fontFamily: "Poppins-SemiBold", color: "#374151", marginBottom: 8, lineHeight: 22 },
+  gdsRow: { flexDirection: "row", gap: 10 },
+  gdsBtn: { flex: 1, paddingVertical: 12, borderRadius: 10, borderWidth: 1.5, borderColor: "#d1d5db", alignItems: "center", backgroundColor: "#fafafa" },
+  gdsBtnText: { fontSize: 15, fontFamily: "Poppins-SemiBold", color: "#555" },
 
   // Score badge
-  scoreBadge: { flexDirection: "row", alignItems: "center", gap: sc(8), marginTop: sc(12), backgroundColor: "#F0FDF4", borderRadius: sc(10), padding: sc(12), borderWidth: 1, borderColor: "#BBF7D0" },
-  scoreText: { fontSize: sc(15), fontFamily: "Poppins-SemiBold", color: "#15803D" },
+  scoreBadge: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12, backgroundColor: "#F0FDF4", borderRadius: 10, padding: 12, borderWidth: 1, borderColor: "#BBF7D0" },
+  scoreText: { fontSize: 15, fontFamily: "Poppins-SemiBold", color: "#15803D" },
 
   // History
-  historySection: { marginTop: sc(8), marginBottom: sc(16) },
-  historyTitle: { fontSize: sc(16), fontFamily: "Poppins-SemiBold", color: "#333", marginBottom: sc(8) },
-  historyEmpty: { fontSize: sc(13), fontFamily: "Poppins-Regular", color: "#999" },
-  historyCard: { backgroundColor: "#fff", borderRadius: sc(12), padding: sc(12), marginBottom: sc(8), borderLeftWidth: sc(3), borderLeftColor: "#0E7C61", ...Platform.select({ ios: { shadowColor: "#000", shadowOpacity: 0.03, shadowOffset: { width: 0, height: 1 }, shadowRadius: 4 }, android: { elevation: 1 } }) },
-  historyRow: { flexDirection: "row", alignItems: "center", gap: sc(6), marginBottom: sc(6) },
-  historyDate: { fontSize: sc(13), fontFamily: "Poppins-Medium", color: "#0E7C61" },
-  historyChipRow: { flexDirection: "row", flexWrap: "wrap", gap: sc(4) },
-  historyChip: { backgroundColor: "#E8F5E9", paddingHorizontal: sc(8), paddingVertical: sc(3), borderRadius: sc(6) },
-  historyChipText: { fontSize: sc(10), fontFamily: "Poppins-Medium", color: "#0E7C61" },
-  submitBtn: { marginTop: sc(8) },
-  submitGradient: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sc(8), paddingVertical: sc(16), borderRadius: sc(16) },
-  submitText: { color: "#fff", fontSize: sc(17), fontFamily: "Poppins-Bold" },
+  historySection: { marginTop: 8, marginBottom: 16 },
+  historyTitle: { fontSize: 16, fontFamily: "Poppins-SemiBold", color: "#333", marginBottom: 8 },
+  historyEmpty: { fontSize: 13, fontFamily: "Poppins-Regular", color: "#999" },
+  historyCard: { backgroundColor: "#fff", borderRadius: 12, padding: 12, marginBottom: 8, borderLeftWidth: 3, borderLeftColor: "#0E7C61" },
+  historyRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 },
+  historyDate: { fontSize: 13, fontFamily: "Poppins-Medium", color: "#0E7C61" },
+  historyChipRow: { flexDirection: "row", flexWrap: "wrap", gap: 4 },
+  historyChip: { backgroundColor: "#E8F5E9", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  historyChipText: { fontSize: 10, fontFamily: "Poppins-Medium", color: "#0E7C61" },
+  submitBtn: { marginTop: 8 },
+  submitGradient: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 16, borderRadius: 16 },
+  submitText: { color: "#fff", fontSize: 17, fontFamily: "Poppins-Bold" },
 });
 
 export default PatientAssessment;

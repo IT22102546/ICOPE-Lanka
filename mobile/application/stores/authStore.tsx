@@ -9,10 +9,11 @@ interface User {
   id?: string;
   _id?: string;
   // User fields from your backend
-  phone: string;
+  name?: string;
+  phone?: string;
   email?: string | null;
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   role: string;
   dateOfBirth?: string | Date | null;
   status?: string | null;
@@ -66,28 +67,30 @@ const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       // Normalize user object to handle both id formats
+      // Backend returns: { id, name, email, role }
+      const nameParts = (user.name || '').split(' ');
       const normalizedUser: User = {
-        // Ensure we have an id (use _id if id is not present)
         id: user.id || user._id || '',
         _id: user._id || user.id || '',
-        phone: user.phone || '',
+        name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || '',
+        phone: user.phone || user.mobile || '',
         email: user.email || null,
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
+        firstName: user.firstName || nameParts[0] || '',
+        lastName: user.lastName || nameParts.slice(1).join(' ') || '',
         role: user.role || '',
         dateOfBirth: user.dateOfBirth || null,
         status: user.status || null,
-        username: user.username || `user_${user.phone}`,
-        mobile: user.mobile || user.phone,
-        isAdmin: user.isAdmin || false,
+        username: user.username || user.email || `user_${user.id || user._id}`,
+        mobile: user.mobile || user.phone || '',
+        isAdmin: user.isAdmin || user.role === 'SUPER_ADMIN',
         profilePicture: user.profilePicture || null,
         joinDate: user.joinDate || new Date(),
       };
 
       console.log("👤 Normalized user:", normalizedUser);
 
-      // Validate required fields
-      if (!normalizedUser.id || !normalizedUser.phone || !normalizedUser.firstName || !normalizedUser.lastName || !normalizedUser.role) {
+      // Validate required fields - only id and role are truly required
+      if (!normalizedUser.id || !normalizedUser.role) {
         console.error("❌ Invalid user data structure:", normalizedUser);
         throw new Error("Invalid user data structure. Missing required fields.");
       }
@@ -171,19 +174,21 @@ const useAuthStore = create<AuthState>((set, get) => ({
 
       if (user && accessToken) {
         // Normalize user object
+        const nameParts = (user.name || '').split(' ');
         const normalizedUser: User = {
           id: user.id || user._id || '',
           _id: user._id || user.id || '',
-          phone: user.phone || '',
+          name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || '',
+          phone: user.phone || user.mobile || '',
           email: user.email || null,
-          firstName: user.firstName || '',
-          lastName: user.lastName || '',
+          firstName: user.firstName || nameParts[0] || '',
+          lastName: user.lastName || nameParts.slice(1).join(' ') || '',
           role: user.role || '',
           dateOfBirth: user.dateOfBirth || null,
           status: user.status || null,
-          username: user.username || `user_${user.phone}`,
-          mobile: user.mobile || user.phone,
-          isAdmin: user.isAdmin || false,
+          username: user.username || user.email || `user_${user.id || user._id}`,
+          mobile: user.mobile || user.phone || '',
+          isAdmin: user.isAdmin || user.role === 'SUPER_ADMIN',
           profilePicture: user.profilePicture || null,
           joinDate: user.joinDate || new Date(),
         };

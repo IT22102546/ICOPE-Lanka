@@ -548,33 +548,6 @@ const OnBoard2: React.FC = () => {
 
         {/* Bottom Content Section with Image */}
         <View style={styles.bottomSection}>
-          {/* Animated Triangle */}
-          <Animated.View style={[styles.triangleContainer, triangleTransform]}>
-            <Image
-              source={images.Traingle1}
-              style={styles.triangle}
-              resizeMode="contain"
-            />
-          </Animated.View>
-
-          {/* Animated Vector */}
-          <Animated.View style={[styles.vectorContainer, vectorTransform]}>
-            <Image
-              source={images.Vector1}
-              style={styles.vector}
-              resizeMode="contain"
-            />
-          </Animated.View>
-
-          {/* Animated Eclipse */}
-          <Animated.View style={[styles.eclipseContainer, eclipseTransform]}>
-            <Image
-              source={images.Eclips1}
-              style={styles.eclipse}
-              resizeMode="contain"
-            />
-          </Animated.View>
-
           {/* Light blue-gray colored filled circle around the onboard image */}
           <View style={styles.circleContainer}>
             <Svg width={240} height={240} style={styles.ashCircle}>
@@ -584,12 +557,23 @@ const OnBoard2: React.FC = () => {
 
           {/* Animated Content */}
           <Animated.View style={[styles.contentWrapper, contentTransform]}>
-            {/* Main OnBoard2 image */}
-            <Image
-              source={images.Onboard02}
-              style={styles.bottomImage}
-              resizeMode="contain"
-            />
+            {/* Icon display replacing onboard image */}
+            <View style={styles.iconDisplay}>
+              <LinearGradient colors={["#dff4ec", "#b2e8d2"]} style={styles.iconCircleOuter}>
+                <LinearGradient colors={["#0E7C61", "#14A87D"]} style={styles.iconCircleInner}>
+                  <Ionicons name="analytics-outline" size={72} color="#fff" />
+                </LinearGradient>
+              </LinearGradient>
+              <View style={[styles.miniIcon, { top: 6, right: 28 }]}>
+                <Ionicons name="pulse" size={20} color="#0E7C61" />
+              </View>
+              <View style={[styles.miniIcon, { bottom: 8, left: 22 }]}>
+                <Ionicons name="barbell-outline" size={18} color="#14A87D" />
+              </View>
+              <View style={[styles.miniIcon, { top: 18, left: 14 }]}>
+                <Ionicons name="stopwatch-outline" size={16} color="#0E7C61" />
+              </View>
+            </View>
 
             {/* Text below the image */}
             <View style={styles.textContainer}>
@@ -767,36 +751,6 @@ const styles = StyleSheet.create({
     color: "#353434",
     fontFamily: "Poppins-Bold",
   },
-  triangleContainer: {
-    position: "absolute",
-    top: -10,
-    left: 40,
-    zIndex: 1,
-  },
-  triangle: {
-    width: 60,
-    height: 60,
-  },
-  vectorContainer: {
-    position: "absolute",
-    top: 3,
-    right: -7,
-    zIndex: 1,
-  },
-  vector: {
-    width: 80,
-    height: 120,
-  },
-  eclipseContainer: {
-    position: "absolute",
-    bottom: 150,
-    left: -30,
-    zIndex: 1,
-  },
-  eclipse: {
-    width: 100,
-    height: 100,
-  },
   circleContainer: {
     position: "absolute",
     justifyContent: "center",
@@ -804,12 +758,40 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
   ashCircle: {},
-  bottomImage: {
+  iconDisplay: {
     width: "100%",
     height: IMG_H,
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: isSmallScreen ? 6 : 10,
     marginTop: isSmallScreen ? 2 : 5,
     zIndex: 1,
+    position: "relative",
+  },
+  iconCircleOuter: {
+    width: Math.round(IMG_H * 0.80),
+    height: Math.round(IMG_H * 0.80),
+    borderRadius: Math.round(IMG_H * 0.40),
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  iconCircleInner: {
+    width: Math.round(IMG_H * 0.60),
+    height: Math.round(IMG_H * 0.60),
+    borderRadius: Math.round(IMG_H * 0.30),
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  miniIcon: {
+    position: "absolute",
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 8,
+    shadowColor: "#0E7C61",
+    shadowOpacity: 0.18,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 6,
+    elevation: 4,
   },
   textContainer: {
     alignItems: "center",

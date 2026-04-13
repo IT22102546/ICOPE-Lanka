@@ -45,6 +45,7 @@ const TXT: Record<string, { en: string; si: string }> = {
   accessDenied:{ en: "Access Denied", si: "ප්‍රවේශය ප්‍රතික්ෂේප විය" },
   accessMsg:   { en: "This account does not have physiotherapist or admin access.", si: "මෙම ගිණුමට භෞතචිකිත්සක හෝ පරිපාලක ප්‍රවේශය නැත." },
   incorrectPw: { en: "Incorrect password", si: "වැරදි මුරපදය" },
+  incorrectCreds: { en: "Invalid email or password", si: "වැරදි විද්‍යුත් තැපෑල හෝ මුරපදය" },
   signInError: { en: "Sign In Error", si: "පිවිසුම් දෝෂය" },
   errorMsg:    { en: "Failed to sign in. Please check your connection.", si: "පිවිසීමට අසමත් විය. කරුණාකර ඔබේ සම්බන්ධතාවය පරීක්ෂා කරන්න." },
 };
@@ -85,13 +86,14 @@ const API = process.env.EXPO_PUBLIC_API_KEY;
 
 const isValidIdentifier = (value: string): boolean => {
   if (!value || value.trim() === "") return false;
+  const trimmed = value.trim();
   
   const emailRegex = /^\S+@\S+\.\S+$/;
-  if (emailRegex.test(value)) {
+  if (emailRegex.test(trimmed)) {
     return true;
   }
   
-  const cleanPhone = value.replace(/\D/g, '');
+  const cleanPhone = trimmed.replace(/\D/g, '');
   return cleanPhone.length >= 9 && cleanPhone.length <= 15;
 };
 
@@ -283,7 +285,9 @@ const SignIn = () => {
     try {
       setLoading(true);
 
-      if (!isValidIdentifier(credentials.identifier)) {
+      const trimmedIdentifier = credentials.identifier.trim();
+
+      if (!isValidIdentifier(trimmedIdentifier)) {
         setError("identifier", {
           type: "manual",
           message: "Please enter a valid email or phone number",
@@ -292,11 +296,11 @@ const SignIn = () => {
         return;
       }
 
-      let formattedIdentifier = credentials.identifier;
-      const isEmailInput = isLikelyEmail(credentials.identifier) && credentials.identifier.includes('@');
+      let formattedIdentifier = trimmedIdentifier;
+      const isEmailInput = isLikelyEmail(trimmedIdentifier) && trimmedIdentifier.includes('@');
       
       if (!isEmailInput) {
-        formattedIdentifier = formatPhoneNumber(credentials.identifier);
+        formattedIdentifier = formatPhoneNumber(trimmedIdentifier);
       }
 
       console.log("📤 Sending physiotherapist login request:", { identifier: formattedIdentifier });
@@ -325,7 +329,10 @@ const SignIn = () => {
             t("accessMsg"),
             [{ text: "OK" }]
           );
-        } else if (message.toLowerCase().includes("password") || message.toLowerCase().includes("credential")) {
+        } else if (message.toLowerCase().includes("credential")) {
+          // "Invalid credentials" covers both wrong email and wrong password
+          setError("password", { type: "manual", message: t("incorrectCreds") });
+        } else if (message.toLowerCase().includes("password")) {
           setError("password", { type: "manual", message: t("incorrectPw") });
         } else {
           setError("identifier", { type: "manual", message: message });
