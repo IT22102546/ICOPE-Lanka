@@ -75,7 +75,7 @@ const TabsLayout = () => {
       <StatusBar style="light" backgroundColor="#0057FF" translucent={false} />
 
       <Tabs
-        initialRouteName="TeacherHome"
+        initialRouteName="home"
         screenOptions={{
           headerShown: true,
           headerShadowVisible: false,
@@ -145,6 +145,7 @@ const TabsLayout = () => {
         <Tabs.Screen
           name="TeacherHome"
           options={{
+            href: null,
             title: "",
             headerShown: true,
             headerStyle: {
@@ -326,26 +327,24 @@ const TabsLayout = () => {
           ) : (
             <TouchableOpacity
               style={styles.navItem}
-              onPress={() =>
-                handleTabPress("TeacherHome", "/(root)/(tabs)/TeacherHome")
-              }
+              onPress={() => handleTabPress("home", "/(root)/(tabs)/home")}
             >
               <View
                 style={[
                   styles.iconContainer,
-                  activeTab === "TeacherHome" && styles.iconContainerActive,
+                  activeTab === "home" && styles.iconContainerActive,
                 ]}
               >
                 <Ionicons
                   name="home"
                   size={22}
-                  color={activeTab === "TeacherHome" ? "#ffffff" : "#64748b"}
+                  color={activeTab === "home" ? "#ffffff" : "#64748b"}
                 />
               </View>
               <Text
                 style={[
                   styles.navText,
-                  activeTab === "TeacherHome" && styles.navTextActive,
+                  activeTab === "home" && styles.navTextActive,
                 ]}
               >
                 Home
