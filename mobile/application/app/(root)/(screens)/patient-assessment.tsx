@@ -554,7 +554,7 @@ const PatientAssessment = () => {
               <View style={[styles.testBox, { marginTop: sc(12) }]}>
                 <Text style={styles.testTitle}>{t("clockDrawing")}</Text>
                 <Text style={styles.testInstr}>{t("clockInstr")}</Text>
-                <View style={styles.row}>
+                <View style={styles.btnRow}>
                   <OptBtn label={t("clockNormal")} sel={clockDrawing === "normal"} onPress={() => setClockDrawing("normal")} color="#10B981" />
                   <OptBtn label={t("clockAbnormal")} sel={clockDrawing === "abnormal"} onPress={() => setClockDrawing("abnormal")} color="#EF4444" />
                 </View>
@@ -934,29 +934,29 @@ const styles = StyleSheet.create({
   domainCard: { backgroundColor: "#fff", borderRadius: sc(16), marginBottom: sc(12), overflow: "hidden", ...Platform.select({ ios: { shadowColor: "#000", shadowOpacity: 0.05, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8 }, android: { elevation: 2 } }) },
   domainHeader: { flexDirection: "row", alignItems: "center", padding: sc(16), borderRadius: sc(16) },
   domainIcon: { width: sc(44), height: sc(44), borderRadius: sc(12), justifyContent: "center", alignItems: "center" },
-  domainHeaderText: { flex: 1, marginLeft: sc(12) },
-  domainTitle: { fontSize: sc(16), fontFamily: "Poppins-SemiBold", color: "#222" },
-  domainDesc: { fontSize: sc(12), fontFamily: "Poppins-Regular", color: "#888" },
+  domainHeaderText: { flex: 1, marginLeft: sc(12), minWidth: 0 },
+  domainTitle: { fontSize: sc(16), fontFamily: "Poppins-SemiBold", color: "#222", flexShrink: 1 },
+  domainDesc: { fontSize: sc(12), fontFamily: "Poppins-Regular", color: "#888", flexShrink: 1, lineHeight: sc(18) },
   domainBody: { paddingHorizontal: sc(16), paddingBottom: sc(16) },
-  fieldLabel: { fontSize: sc(13), fontFamily: "Poppins-Medium", color: "#555", marginTop: sc(12), marginBottom: sc(6) },
+  fieldLabel: { fontSize: sc(13), fontFamily: "Poppins-Medium", color: "#555", marginTop: sc(12), marginBottom: sc(6), flexShrink: 1, lineHeight: sc(20) },
   input: { backgroundColor: "#f9f9f9", borderWidth: 1, borderColor: "#e5e5e5", borderRadius: sc(10), paddingHorizontal: sc(14), paddingVertical: sc(10), fontSize: sc(14), fontFamily: "Poppins-Regular", color: "#333" },
   multiline: { minHeight: sc(56), textAlignVertical: "top" },
   row: { flexDirection: "row", gap: sc(12) },
   halfField: { flex: 1 },
-  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: sc(6) },
-  statusChip: { paddingHorizontal: sc(10), paddingVertical: sc(6), borderRadius: sc(8), borderWidth: 1, borderColor: "#e5e5e5", backgroundColor: "#fafafa" },
-  statusChipText: { fontSize: sc(11), fontFamily: "Poppins-Regular", color: "#777" },
-  switchRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: sc(12) },
-  switchLabel: { fontSize: sc(14), fontFamily: "Poppins-Regular", color: "#555" },
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: sc(6), alignItems: "flex-start" },
+  statusChip: { paddingHorizontal: sc(10), paddingVertical: sc(6), borderRadius: sc(8), borderWidth: 1, borderColor: "#e5e5e5", backgroundColor: "#fafafa", maxWidth: "100%", alignSelf: "flex-start" },
+  statusChipText: { fontSize: sc(11), fontFamily: "Poppins-Regular", color: "#777", flexShrink: 1, flexWrap: "wrap", textAlign: "center", lineHeight: sc(16) },
+  switchRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginTop: sc(12), gap: sc(12) },
+  switchLabel: { fontSize: sc(14), fontFamily: "Poppins-Regular", color: "#555", flex: 1, flexWrap: "wrap", lineHeight: sc(21) },
 
   // Interactive test styles
   testBox: { backgroundColor: "#F8FAFC", borderRadius: sc(12), padding: sc(14), borderWidth: 1, borderColor: "#E2E8F0" },
-  testTitle: { fontSize: sc(15), fontFamily: "Poppins-SemiBold", color: "#334155", marginBottom: sc(4) },
+  testTitle: { fontSize: sc(15), fontFamily: "Poppins-SemiBold", color: "#334155", marginBottom: sc(4), flexShrink: 1 },
   testInstr: { fontSize: sc(13), fontFamily: "Poppins-Regular", color: "#64748B", lineHeight: sc(20), marginBottom: sc(12) },
-  actionBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sc(8), paddingVertical: sc(12), borderRadius: sc(12), marginTop: sc(8) },
-  actionBtnText: { color: "#fff", fontSize: sc(15), fontFamily: "Poppins-SemiBold" },
-  optBtn: { flexDirection: "row", alignItems: "center", paddingVertical: sc(10), paddingHorizontal: sc(14), borderRadius: sc(10), borderWidth: 1.5, borderColor: "#d1d5db", backgroundColor: "#fafafa", marginBottom: sc(6) },
-  optBtnText: { fontSize: sc(14), fontFamily: "Poppins-Regular", color: "#555", flexShrink: 1 },
+  actionBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sc(8), paddingVertical: sc(12), borderRadius: sc(12), marginTop: sc(8), paddingHorizontal: sc(12) },
+  actionBtnText: { color: "#fff", fontSize: sc(15), fontFamily: "Poppins-SemiBold", flexShrink: 1, textAlign: "center", lineHeight: sc(22) },
+  optBtn: { flexDirection: "row", alignItems: "center", paddingVertical: sc(10), paddingHorizontal: sc(14), borderRadius: sc(10), borderWidth: 1.5, borderColor: "#d1d5db", backgroundColor: "#fafafa", marginBottom: sc(6), minWidth: 0, maxWidth: "100%", flexShrink: 1 },
+  optBtnText: { fontSize: sc(14), fontFamily: "Poppins-Regular", color: "#555", flexShrink: 1, flexWrap: "wrap", lineHeight: sc(21) },
   btnRow: { flexDirection: "row", flexWrap: "wrap", gap: sc(8) },
 
   // Word recall
@@ -964,21 +964,21 @@ const styles = StyleSheet.create({
   wordBadge: { backgroundColor: "#EEF2FF", borderRadius: sc(12), paddingHorizontal: sc(16), paddingVertical: sc(12), alignItems: "center", borderWidth: 1, borderColor: "#C7D2FE", minWidth: sc(80) },
   wordNum: { fontSize: sc(11), fontFamily: "Poppins-SemiBold", color: "#6366F1", marginBottom: sc(2) },
   wordText: { fontSize: sc(18), fontFamily: "Poppins-Bold", color: "#4338CA" },
-  recallRow: { flexDirection: "row", gap: sc(8), marginTop: sc(8) },
+  recallRow: { flexDirection: "row", gap: sc(8), marginTop: sc(8), flexWrap: "wrap" },
   recallBtn: { flex: 1, paddingVertical: sc(12), borderRadius: sc(10), borderWidth: 1.5, borderColor: "#d1d5db", alignItems: "center", backgroundColor: "#fafafa" },
-  recallBtnText: { fontSize: sc(14), fontFamily: "Poppins-SemiBold", color: "#555" },
+  recallBtnText: { fontSize: sc(14), fontFamily: "Poppins-SemiBold", color: "#555", textAlign: "center", lineHeight: sc(20) },
 
   // TUG timer
   timerDisplay: { alignItems: "center", marginVertical: sc(16), backgroundColor: "#FFF7ED", borderRadius: sc(16), paddingVertical: sc(20), paddingHorizontal: sc(16), borderWidth: 1, borderColor: "#FED7AA" },
   timerNumber: { fontSize: sc(48), fontFamily: "Poppins-Bold", color: "#EA580C", fontVariant: ["tabular-nums"], includeFontPadding: false },
   timerUnit: { fontSize: sc(14), fontFamily: "Poppins-Regular", color: "#9A3412", marginTop: sc(4) },
-  timerRow: { flexDirection: "row", gap: sc(10), marginTop: sc(8) },
+  timerRow: { flexDirection: "row", gap: sc(10), marginTop: sc(8), flexWrap: "wrap" },
   timerBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sc(6), paddingVertical: sc(14), borderRadius: sc(12) },
-  timerBtnText: { color: "#fff", fontSize: sc(15), fontFamily: "Poppins-SemiBold" },
+  timerBtnText: { color: "#fff", fontSize: sc(15), fontFamily: "Poppins-SemiBold", flexShrink: 1, textAlign: "center", lineHeight: sc(22) },
 
   // MNA-SF questions
   questionBox: { marginBottom: sc(14), backgroundColor: "#fff", borderRadius: sc(10), padding: sc(12), borderWidth: 1, borderColor: "#E5E7EB" },
-  questionText: { fontSize: sc(14), fontFamily: "Poppins-SemiBold", color: "#374151", marginBottom: sc(8), lineHeight: sc(22) },
+  questionText: { fontSize: sc(14), fontFamily: "Poppins-SemiBold", color: "#374151", marginBottom: sc(8), lineHeight: sc(22), flexShrink: 1 },
 
   // Hearing whisper
   whisperDisplay: { alignItems: "center", marginVertical: sc(12), backgroundColor: "#EFF6FF", borderRadius: sc(16), paddingVertical: sc(16), paddingHorizontal: sc(20), borderWidth: 1, borderColor: "#BFDBFE" },
@@ -992,10 +992,10 @@ const styles = StyleSheet.create({
 
   // GDS-4
   gdsQuestion: { marginBottom: sc(14) },
-  gdsQuestionText: { fontSize: sc(14), fontFamily: "Poppins-SemiBold", color: "#374151", marginBottom: sc(8), lineHeight: sc(22) },
-  gdsRow: { flexDirection: "row", gap: sc(10) },
+  gdsQuestionText: { fontSize: sc(14), fontFamily: "Poppins-SemiBold", color: "#374151", marginBottom: sc(8), lineHeight: sc(22), flexShrink: 1 },
+  gdsRow: { flexDirection: "row", gap: sc(10), flexWrap: "wrap" },
   gdsBtn: { flex: 1, paddingVertical: sc(12), borderRadius: sc(10), borderWidth: 1.5, borderColor: "#d1d5db", alignItems: "center", backgroundColor: "#fafafa" },
-  gdsBtnText: { fontSize: sc(15), fontFamily: "Poppins-SemiBold", color: "#555" },
+  gdsBtnText: { fontSize: sc(15), fontFamily: "Poppins-SemiBold", color: "#555", textAlign: "center", lineHeight: sc(22) },
 
   // Score badge
   scoreBadge: { flexDirection: "row", alignItems: "center", gap: sc(8), marginTop: sc(12), backgroundColor: "#F0FDF4", borderRadius: sc(10), padding: sc(12), borderWidth: 1, borderColor: "#BBF7D0" },
@@ -1009,8 +1009,8 @@ const styles = StyleSheet.create({
   historyRow: { flexDirection: "row", alignItems: "center", gap: sc(6), marginBottom: sc(6) },
   historyDate: { fontSize: sc(13), fontFamily: "Poppins-Medium", color: "#0E7C61" },
   historyChipRow: { flexDirection: "row", flexWrap: "wrap", gap: sc(4) },
-  historyChip: { backgroundColor: "#E8F5E9", paddingHorizontal: sc(8), paddingVertical: sc(3), borderRadius: sc(6) },
-  historyChipText: { fontSize: sc(10), fontFamily: "Poppins-Medium", color: "#0E7C61" },
+  historyChip: { backgroundColor: "#E8F5E9", paddingHorizontal: sc(8), paddingVertical: sc(3), borderRadius: sc(6), maxWidth: "100%" },
+  historyChipText: { fontSize: sc(10), fontFamily: "Poppins-Medium", color: "#0E7C61", flexShrink: 1, flexWrap: "wrap", lineHeight: sc(14) },
   submitBtn: { marginTop: sc(8) },
   submitGradient: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sc(8), paddingVertical: sc(16), borderRadius: sc(16) },
   submitText: { color: "#fff", fontSize: sc(17), fontFamily: "Poppins-Bold" },

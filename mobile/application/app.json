@@ -69,10 +69,10 @@
         "origin": false
       },
      "eas": {
-        "projectId": "7d4c8626-81b3-4c5e-836d-d4870b9c3e46"
+         "projectId": "8ad0f96f-f73e-467b-a809-c37d49ce50d7"
       }
     },
-    "owner": "sanjananimesh",
+    "owner": "sanjananimesh2001",
     "runtimeVersion": {
       "policy": "appVersion"
     }

@@ -516,12 +516,23 @@ const OnBoard3: React.FC = () => {
 
           {/* Animated Content */}
           <Animated.View style={[styles.contentWrapper, contentTransform]}>
-            {/* Main OnBoard3 image */}
-            <Image
-              source={images.Onboard03}
-              style={styles.bottomImage}
-              resizeMode="contain"
-            />
+            {/* Icon display replacing onboard image */}
+            <View style={styles.iconDisplay}>
+              <LinearGradient colors={["#dff4ec", "#b2e8d2"]} style={styles.iconCircleOuter}>
+                <LinearGradient colors={["#0E7C61", "#14A87D"]} style={styles.iconCircleInner}>
+                  <Ionicons name="people-outline" size={72} color="#fff" />
+                </LinearGradient>
+              </LinearGradient>
+              <View style={[styles.miniIcon, { top: 6, right: 28 }]}>
+                <Ionicons name="chatbubbles-outline" size={20} color="#0E7C61" />
+              </View>
+              <View style={[styles.miniIcon, { bottom: 8, left: 22 }]}>
+                <Ionicons name="medkit-outline" size={18} color="#14A87D" />
+              </View>
+              <View style={[styles.miniIcon, { top: 18, left: 14 }]}>
+                <Ionicons name="shield-checkmark-outline" size={16} color="#0E7C61" />
+              </View>
+            </View>
 
             {/* Text below the image */}
             <View style={styles.textContainer}>
@@ -704,12 +715,40 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
   ashCircle: {},
-  bottomImage: {
+  iconDisplay: {
     width: "100%",
     height: IMG_H,
     marginBottom: isSmallScreen ? 6 : 10,
     marginTop: isSmallScreen ? 2 : 5,
     zIndex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
+  },
+  iconCircleOuter: {
+    width: Math.round(IMG_H * 0.80),
+    height: Math.round(IMG_H * 0.80),
+    borderRadius: Math.round(IMG_H * 0.40),
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  iconCircleInner: {
+    width: Math.round(IMG_H * 0.60),
+    height: Math.round(IMG_H * 0.60),
+    borderRadius: Math.round(IMG_H * 0.30),
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  miniIcon: {
+    position: "absolute",
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 8,
+    shadowColor: "#0E7C61",
+    shadowOpacity: 0.18,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 6,
+    elevation: 4,
   },
   textContainer: {
     alignItems: "center",
