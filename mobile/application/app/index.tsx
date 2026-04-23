@@ -16,9 +16,9 @@ const Home = () => {
 
   if (loading) return null;
 
-  // Parent-only app: signed-in users go to home, otherwise start onboarding
+  // Signed-in users always land on the main patient list screen.
   return isSignedIn ? (
-    <Redirect href="/(root)/(tabs)/home" />
+    <Redirect href="/(root)/(screens)/doctor-patients" />
   ) : (
     <Redirect href="/(auth)/onBoard1" />
   );
