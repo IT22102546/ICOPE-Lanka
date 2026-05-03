@@ -584,6 +584,7 @@ const styles = StyleSheet.create({
   countText: { color: "#888", fontSize: sc(13), fontFamily: "Poppins-Medium" },
   hintText: { color: "#bbb", fontSize: sc(11), fontFamily: "Poppins-Regular" },
 
+
   list: { paddingHorizontal: sc(16), paddingBottom: sc(100) },
   card: {
     backgroundColor: "#fff",

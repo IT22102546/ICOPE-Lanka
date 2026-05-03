@@ -16,7 +16,6 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { apiFetch } from "@/utils/api";
 import useAuthStore from "@/stores/authStore";
 
 const { width: screenWidth } = Dimensions.get("window");
@@ -80,22 +79,35 @@ const HealthCareStaffScreen = () => {
       const token = await getAccessToken();
       if (!token) return;
 
-      // Try /api/users?role=PHYSIOTHERAPIST first, then fallback endpoints
+      // Primary: GET /api/physiotherapists (same endpoint as admin dashboard)
       let list: HealthCareStaff[] = [];
 
-      const res = await fetch(`${API}/api/users?role=PHYSIOTHERAPIST`, {
+      const res = await fetch(`${API}/api/physiotherapists`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (res.ok) {
         const json = await res.json();
-        list = json.users || json.staff || json.doctors || (Array.isArray(json) ? json : []);
-      } else {
-        // Fallback: fetch from v1 endpoint
-        const res2 = await apiFetch("/api/v1/users?role=PHYSIOTHERAPIST", { method: "GET" });
-        if (res2.ok) {
-          const json2 = await res2.json();
-          list = json2.users || json2.data || (Array.isArray(json2) ? json2 : []);
+        // Dashboard response key is "physiotherapists"
+        list = json.physiotherapists || json.users || json.staff || (Array.isArray(json) ? json : []);
+      }
+
+      // Fallback: try alternate endpoints with same auth pattern
+      if (list.length === 0) {
+        const fallbacks = [
+          `${API}/api/users?role=PHYSIOTHERAPIST`,
+          `${API}/api/users?role=HEALTH_CARE_STAFF`,
+          `${API}/api/doctors`,
+        ];
+        for (const url of fallbacks) {
+          try {
+            const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+            if (r.ok) {
+              const j = await r.json();
+              const raw = j.physiotherapists ?? j.users ?? j.staff ?? j.doctors ?? j.data ?? (Array.isArray(j) ? j : []);
+              if (raw.length > 0) { list = raw; break; }
+            }
+          } catch (_) { /* try next */ }
         }
       }
 
@@ -126,7 +138,8 @@ const HealthCareStaffScreen = () => {
             try {
               const token = await getAccessToken();
               const sid = selected._id || selected.id;
-              const res = await fetch(`${API}/api/users/${sid}`, {
+              // DELETE /api/physiotherapists/:id (same as dashboard line 88)
+              const res = await fetch(`${API}/api/physiotherapists/${sid}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
               });
@@ -385,7 +398,11 @@ const HealthCareStaffScreen = () => {
                 const sid = selected?._id || selected?.id;
                 router.push({
                   pathname: "/(root)/(screens)/add-staff",
-                  params: { staffId: sid, staffName: staffName(selected!) },
+                  params: {
+                    staffId: sid,
+                    staffName: staffName(selected!),
+                    staffEmail: selected?.email || "",
+                  },
                 });
               }}
             >
