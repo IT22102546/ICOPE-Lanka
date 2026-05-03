@@ -73,7 +73,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
   };
 
   const menuItems = [
-    { name: "Physiotherapists", path: "/(root)/(tabs)/physiotherapists", icon: icons.sidebar_teachers },
+    { name: "Health Care Staff", path: "/(root)/(screens)/teachers", icon: icons.sidebar_teachers },
     { name: "Online Sessions", path: "/(root)/(tabs)/online_sessions", icon: icons.sidebar_video },
     { name: "Physical Sessions", path: "/(root)/(tabs)/admission_tracking", icon: icons.sidebar_instruction },
     {
@@ -86,7 +86,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
       path: "/(tabs)/publications",
       icon: icons.sidebar_publications,
     },
-
   ];
 
   if (!isVisible) return null;

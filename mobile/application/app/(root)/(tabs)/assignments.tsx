@@ -392,7 +392,7 @@ export default function AssignmentsScreen() {
 
               <Text style={styles.metaText}>Due: {formatDate(item.dueDate)}</Text>
               {item.physiotherapist?.name ? (
-                <Text style={styles.metaText}>Physiotherapist: {item.physiotherapist.name}</Text>
+                <Text style={styles.metaText}>Health Care Staff: {item.physiotherapist.name}</Text>
               ) : null}
               <Text style={styles.cardDescription}>
                 {item.description?.trim() || "No description provided."}

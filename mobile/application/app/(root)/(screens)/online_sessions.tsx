@@ -378,7 +378,7 @@ export default function OnlineSessionsScreen() {
 
           {visibleSessions.map((item) => {
             const therapistName = item.physiotherapist?.name || "Not assigned";
-            const therapistRole = item.physiotherapist?.specialization || item.physiotherapist?.role || "Physiotherapist";
+            const therapistRole = item.physiotherapist?.specialization || item.physiotherapist?.role || "Health Care Staff";
             const status = String(item.status || "SCHEDULED").toUpperCase();
             const badgeColor = statusColor(status);
             const sessionLink =

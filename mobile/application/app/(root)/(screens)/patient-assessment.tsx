@@ -879,26 +879,132 @@ const PatientAssessment = () => {
 
         {/* ─── Previous assessments ───────────────── */}
         <View style={styles.historySection}>
-          <Text style={styles.historyTitle}>{t("history")}</Text>
+          <View style={styles.historyTitleRow}>
+            <Ionicons name="time-outline" size={sc(18)} color="#0E7C61" />
+            <Text style={styles.historyTitle}>{t("history")}</Text>
+            {history.length > 0 && (
+              <View style={styles.historyCountBadge}>
+                <Text style={styles.historyCountText}>{history.length}</Text>
+              </View>
+            )}
+          </View>
+
           {loadingHistory ? (
             <ActivityIndicator color="#0E7C61" style={{ marginTop: sc(12) }} />
           ) : history.length === 0 ? (
-            <Text style={styles.historyEmpty}>{t("noHistory")}</Text>
+            <View style={styles.historyEmptyBox}>
+              <Ionicons name="clipboard-outline" size={sc(32)} color="#d1d5db" />
+              <Text style={styles.historyEmpty}>{t("noHistory")}</Text>
+            </View>
           ) : (
-            history.slice(0, 5).map((a, i) => (
-              <View key={a._id || i} style={styles.historyCard}>
-                <View style={styles.historyRow}>
-                  <Ionicons name="calendar-outline" size={sc(14)} color="#0E7C61" />
-                  <Text style={styles.historyDate}>{new Date(a.createdAt).toLocaleDateString()}</Text>
+            history.slice(0, 6).map((a, i) => {
+              const domainRows: { icon: string; color: string; label: string; status: string; score?: string }[] = [];
+              if (a.cognitionStatus && a.cognitionStatus !== "Not Assessed")
+                domainRows.push({ icon: "bulb-outline", color: "#6366F1", label: t("cognition"), status: sl(a.cognitionStatus), score: a.cognitionScore != null ? `${a.cognitionScore}/30` : undefined });
+              if (a.locomotionStatus && a.locomotionStatus !== "Not Assessed")
+                domainRows.push({ icon: "walk-outline", color: "#F59E0B", label: t("locomotion"), status: sl(a.locomotionStatus), score: a.tugTime != null ? `${a.tugTime}s TUG` : undefined });
+              if (a.vitalityStatus && a.vitalityStatus !== "Not Assessed")
+                domainRows.push({ icon: "nutrition-outline", color: "#10B981", label: t("vitality"), status: sl(a.vitalityStatus), score: a.mnaScore != null ? `MNA ${a.mnaScore}/14` : undefined });
+              if (a.hearingLeft && a.hearingLeft !== "Not Assessed")
+                domainRows.push({ icon: "ear-outline", color: "#3B82F6", label: t("hearing"), status: `L: ${sl(a.hearingLeft)} · R: ${sl(a.hearingRight || "Not Assessed")}` });
+              if (a.visionLeft && a.visionLeft !== "Not Assessed")
+                domainRows.push({ icon: "eye-outline", color: "#8B5CF6", label: t("vision"), status: `L: ${sl(a.visionLeft)} · R: ${sl(a.visionRight || "Not Assessed")}` });
+              if (a.moodStatus && a.moodStatus !== "Not Assessed")
+                domainRows.push({ icon: "happy-outline", color: "#EC4899", label: t("mood"), status: sl(a.moodStatus), score: a.gdsScore != null ? `GDS ${a.gdsScore}/4` : undefined });
+
+              const statusColor = (s: string) =>
+                s.includes("Normal") ? "#10B981" :
+                s.includes("Mild") || s.includes("At Risk") || s.includes("Possible") ? "#F59E0B" :
+                s.includes("Severe") || s.includes("Depression") || s.includes("Malnourished") ? "#EF4444" :
+                "#6B7280";
+
+              const fmtDate = (iso: string) => {
+                try {
+                  const d = new Date(iso);
+                  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+                } catch { return iso; }
+              };
+
+              return (
+                <View key={a._id || i} style={styles.historyCard}>
+                  {/* Card header */}
+                  <View style={styles.historyCardHeader}>
+                    <View style={styles.historyCardHeaderLeft}>
+                      <View style={styles.historyIndexBadge}>
+                        <Text style={styles.historyIndexText}>{history.length - i}</Text>
+                      </View>
+                      <View>
+                        <Text style={styles.historyDateText}>{fmtDate(a.createdAt)}</Text>
+                        <Text style={styles.historySubText}>
+                          {domainRows.length} domain{domainRows.length !== 1 ? "s" : ""} assessed
+                        </Text>
+                      </View>
+                    </View>
+                    {a.referralNeeded && (
+                      <View style={styles.referralBadge}>
+                        <Ionicons name="arrow-forward-circle-outline" size={sc(13)} color="#DC2626" />
+                        <Text style={styles.referralBadgeText}>Referral</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Domain results */}
+                  {domainRows.length > 0 && (
+                    <View style={styles.domainResultGrid}>
+                      {domainRows.map((d, di) => {
+                        const sc2 = statusColor(d.status);
+                        return (
+                          <View key={di} style={styles.domainResultRow}>
+                            <View style={[styles.domainResultIcon, { backgroundColor: d.color + "15" }]}>
+                              <Ionicons name={d.icon as any} size={sc(15)} color={d.color} />
+                            </View>
+                            <View style={styles.domainResultText}>
+                              <Text style={styles.domainResultLabel}>{d.label}</Text>
+                              <Text style={[styles.domainResultStatus, { color: sc2 }]}>{d.status}</Text>
+                            </View>
+                            {d.score && (
+                              <View style={[styles.domainResultScore, { backgroundColor: d.color + "12" }]}>
+                                <Text style={[styles.domainResultScoreText, { color: d.color }]}>{d.score}</Text>
+                              </View>
+                            )}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
+
+                  {/* Vitals row */}
+                  {(a.weight || a.height || a.bmi) && (
+                    <View style={styles.vitalsRow}>
+                      {a.weight && <View style={styles.vitalChip}><Text style={styles.vitalChipText}>⚖ {a.weight} kg</Text></View>}
+                      {a.height && <View style={styles.vitalChip}><Text style={styles.vitalChipText}>↕ {a.height} cm</Text></View>}
+                      {a.bmi && <View style={styles.vitalChip}><Text style={styles.vitalChipText}>BMI {a.bmi}</Text></View>}
+                      {a.hearingAid && <View style={styles.vitalChip}><Text style={styles.vitalChipText}>🔉 Hearing Aid</Text></View>}
+                      {a.glassesUsed && <View style={styles.vitalChip}><Text style={styles.vitalChipText}>👓 Glasses</Text></View>}
+                    </View>
+                  )}
+
+                  {/* Care plan summary */}
+                  {(a.careRecommendations || a.followUpDate) && (
+                    <View style={styles.carePlanBox}>
+                      <View style={styles.carePlanHeader}>
+                        <Ionicons name="clipboard-outline" size={sc(13)} color="#0E7C61" />
+                        <Text style={styles.carePlanTitle}>Care Plan</Text>
+                      </View>
+                      {a.careRecommendations ? (
+                        <Text style={styles.carePlanText} numberOfLines={3}>{a.careRecommendations}</Text>
+                      ) : null}
+                      {a.followUpDate ? (
+                        <View style={styles.followUpRow}>
+                          <Ionicons name="calendar-outline" size={sc(12)} color="#0E7C61" />
+                          <Text style={styles.followUpText}>Follow-up: {a.followUpDate}</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                  )}
                 </View>
-                <View style={styles.historyChipRow}>
-                  {a.cognitionStatus && a.cognitionStatus !== "Not Assessed" && <View style={styles.historyChip}><Text style={styles.historyChipText}>{t("cognition")}: {sl(a.cognitionStatus)}</Text></View>}
-                  {a.locomotionStatus && a.locomotionStatus !== "Not Assessed" && <View style={styles.historyChip}><Text style={styles.historyChipText}>{t("locomotion")}: {sl(a.locomotionStatus)}</Text></View>}
-                  {a.vitalityStatus && a.vitalityStatus !== "Not Assessed" && <View style={styles.historyChip}><Text style={styles.historyChipText}>{t("vitality")}: {sl(a.vitalityStatus)}</Text></View>}
-                  {a.moodStatus && a.moodStatus !== "Not Assessed" && <View style={styles.historyChip}><Text style={styles.historyChipText}>{t("mood")}: {sl(a.moodStatus)}</Text></View>}
-                </View>
-              </View>
-            ))
+              );
+            })
           )}
         </View>
 
@@ -1003,14 +1109,51 @@ const styles = StyleSheet.create({
 
   // History
   historySection: { marginTop: sc(8), marginBottom: sc(16) },
-  historyTitle: { fontSize: sc(16), fontFamily: "Poppins-SemiBold", color: "#333", marginBottom: sc(8) },
+  historyTitleRow: { flexDirection: "row", alignItems: "center", gap: sc(8), marginBottom: sc(12) },
+  historyTitle: { fontSize: sc(16), fontFamily: "Poppins-SemiBold", color: "#333", flex: 1 },
+  historyCountBadge: { backgroundColor: "#0E7C61", borderRadius: sc(10), paddingHorizontal: sc(8), paddingVertical: sc(2) },
+  historyCountText: { color: "#fff", fontSize: sc(11), fontFamily: "Poppins-SemiBold" },
+  historyEmptyBox: { alignItems: "center", paddingVertical: sc(24), gap: sc(8) },
   historyEmpty: { fontSize: sc(13), fontFamily: "Poppins-Regular", color: "#999" },
-  historyCard: { backgroundColor: "#fff", borderRadius: sc(12), padding: sc(12), marginBottom: sc(8), borderLeftWidth: sc(3), borderLeftColor: "#0E7C61", ...Platform.select({ ios: { shadowColor: "#000", shadowOpacity: 0.03, shadowOffset: { width: 0, height: 1 }, shadowRadius: 4 }, android: { elevation: 1 } }) },
-  historyRow: { flexDirection: "row", alignItems: "center", gap: sc(6), marginBottom: sc(6) },
-  historyDate: { fontSize: sc(13), fontFamily: "Poppins-Medium", color: "#0E7C61" },
-  historyChipRow: { flexDirection: "row", flexWrap: "wrap", gap: sc(4) },
-  historyChip: { backgroundColor: "#E8F5E9", paddingHorizontal: sc(8), paddingVertical: sc(3), borderRadius: sc(6), maxWidth: "100%" },
-  historyChipText: { fontSize: sc(10), fontFamily: "Poppins-Medium", color: "#0E7C61", flexShrink: 1, flexWrap: "wrap", lineHeight: sc(14) },
+
+  historyCard: {
+    backgroundColor: "#fff",
+    borderRadius: sc(16),
+    marginBottom: sc(12),
+    overflow: "hidden",
+    ...Platform.select({
+      ios: { shadowColor: "#000", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8 },
+      android: { elevation: 2 },
+    }),
+  },
+  historyCardHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: sc(14), paddingBottom: sc(10), borderBottomWidth: 1, borderBottomColor: "#f3f4f6" },
+  historyCardHeaderLeft: { flexDirection: "row", alignItems: "center", gap: sc(10) },
+  historyIndexBadge: { width: sc(28), height: sc(28), borderRadius: sc(14), backgroundColor: "#0E7C61", justifyContent: "center", alignItems: "center" },
+  historyIndexText: { color: "#fff", fontSize: sc(12), fontFamily: "Poppins-Bold" },
+  historyDateText: { fontSize: sc(13), fontFamily: "Poppins-SemiBold", color: "#222" },
+  historySubText: { fontSize: sc(11), fontFamily: "Poppins-Regular", color: "#999", marginTop: 1 },
+  referralBadge: { flexDirection: "row", alignItems: "center", gap: sc(4), backgroundColor: "#FEF2F2", paddingHorizontal: sc(8), paddingVertical: sc(3), borderRadius: sc(8) },
+  referralBadgeText: { fontSize: sc(10), fontFamily: "Poppins-SemiBold", color: "#DC2626" },
+
+  domainResultGrid: { paddingHorizontal: sc(12), paddingVertical: sc(8), gap: sc(2) },
+  domainResultRow: { flexDirection: "row", alignItems: "center", paddingVertical: sc(6), gap: sc(10), borderBottomWidth: 1, borderBottomColor: "#f9fafb" },
+  domainResultIcon: { width: sc(28), height: sc(28), borderRadius: sc(8), justifyContent: "center", alignItems: "center" },
+  domainResultText: { flex: 1 },
+  domainResultLabel: { fontSize: sc(11), fontFamily: "Poppins-Medium", color: "#888" },
+  domainResultStatus: { fontSize: sc(13), fontFamily: "Poppins-SemiBold", marginTop: 1 },
+  domainResultScore: { paddingHorizontal: sc(8), paddingVertical: sc(3), borderRadius: sc(8) },
+  domainResultScoreText: { fontSize: sc(11), fontFamily: "Poppins-SemiBold" },
+
+  vitalsRow: { flexDirection: "row", flexWrap: "wrap", gap: sc(6), paddingHorizontal: sc(12), paddingBottom: sc(10) },
+  vitalChip: { backgroundColor: "#f3f4f6", paddingHorizontal: sc(10), paddingVertical: sc(4), borderRadius: sc(8) },
+  vitalChipText: { fontSize: sc(11), fontFamily: "Poppins-Regular", color: "#555" },
+
+  carePlanBox: { backgroundColor: "#f0faf6", marginHorizontal: sc(12), marginBottom: sc(12), borderRadius: sc(10), padding: sc(10), borderWidth: 1, borderColor: "#d1fae5" },
+  carePlanHeader: { flexDirection: "row", alignItems: "center", gap: sc(5), marginBottom: sc(5) },
+  carePlanTitle: { fontSize: sc(12), fontFamily: "Poppins-SemiBold", color: "#0E7C61" },
+  carePlanText: { fontSize: sc(12), fontFamily: "Poppins-Regular", color: "#374151", lineHeight: sc(18) },
+  followUpRow: { flexDirection: "row", alignItems: "center", gap: sc(5), marginTop: sc(6) },
+  followUpText: { fontSize: sc(12), fontFamily: "Poppins-Medium", color: "#0E7C61" },
   submitBtn: { marginTop: sc(8) },
   submitGradient: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sc(8), paddingVertical: sc(16), borderRadius: sc(16) },
   submitText: { color: "#fff", fontSize: sc(17), fontFamily: "Poppins-Bold" },

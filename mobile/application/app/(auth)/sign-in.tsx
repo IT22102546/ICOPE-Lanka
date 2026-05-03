@@ -27,7 +27,7 @@ import useAuthStore from "@/stores/authStore";
 // ── Bilingual text ───────────────────────────────────────────────
 const TXT: Record<string, { en: string; si: string }> = {
   brand:       { en: "ICOPE Lanka", si: "ICOPE Lanka" },
-  tagline:     { en: "Physiotherapist Portal", si: "භෞතචිකිත්සක ද්වාරය" },
+  tagline:     { en: "Health Care Staff Portal", si: "සෞඛ්‍ය සේවා ද්වාරය" },
   welcome:     { en: "Welcome Back", si: "සාදරයෙන් පිළිගනිමු" },
   subtitle:    { en: "Sign in with your admin-provided credentials", si: "පරිපාලක ලබා දුන් අක්තපත්‍ර සමඟ පිවිසෙන්න" },
   emailLabel:  { en: "Email or Phone Number", si: "විද්‍යුත් තැපෑල හෝ දුරකථන අංකය" },
@@ -43,7 +43,7 @@ const TXT: Record<string, { en: string; si: string }> = {
   usingEmail:  { en: "Using email to sign in", si: "විද්‍යුත් තැපෑලෙන් පිවිසෙමින්" },
   usingPhone:  { en: "Using phone number to sign in", si: "දුරකථන අංකයෙන් පිවිසෙමින්" },
   accessDenied:{ en: "Access Denied", si: "ප්‍රවේශය ප්‍රතික්ෂේප විය" },
-  accessMsg:   { en: "This account does not have physiotherapist or admin access.", si: "මෙම ගිණුමට භෞතචිකිත්සක හෝ පරිපාලක ප්‍රවේශය නැත." },
+  accessMsg:   { en: "This account does not have health care staff or admin access.", si: "මෙම ගිණුමට සෞඛ්‍ය සේවා කාර්ය මණ්ඩල හෝ පරිපාලක ප්‍රවේශය නැත." },
   incorrectPw: { en: "Incorrect password", si: "වැරදි මුරපදය" },
   incorrectCreds: { en: "Invalid email or password", si: "වැරදි විද්‍යුත් තැපෑල හෝ මුරපදය" },
   signInError: { en: "Sign In Error", si: "පිවිසුම් දෝෂය" },
