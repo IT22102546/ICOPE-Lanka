@@ -28,7 +28,7 @@ const TXT: Record<string, { en: string; si: string }> = {
   brand:           { en: "ICOPE Lanka", si: "ICOPE Lanka" },
   assessment:      { en: "ICOPE Assessment", si: "ICOPE තක්සේරුව" },
   cognition:       { en: "Cognition", si: "සංජානන" },
-  cognitionDesc:   { en: "Word recall & clock drawing", si: "වචන සිහිපත් කිරීම සහ ඔරලෝසු ඇඳීම" },
+  cognitionDesc:   { en: "Word recall & orientation", si: "වචන සිහිපත් කිරීම සහ දිශානතිය" },
   locomotion:      { en: "Locomotion", si: "චලනය" },
   locomotionDesc:  { en: "Timed Up & Go (TUG) test", si: "කාලගත නැගිටීම සහ ඇවිදීම (TUG)" },
   vitality:        { en: "Vitality / Nutrition", si: "ජීවනකාරිත්වය / පෝෂණය" },
@@ -51,11 +51,10 @@ const TXT: Record<string, { en: string; si: string }> = {
   recallInstr:     { en: "How many words did the patient recall correctly?", si: "රෝගියා නිවැරදිව සිහිපත් කළ වචන ගණන කීයද?" },
   wordsRecalled:   { en: "Words recalled", si: "සිහිපත් කළ වචන" },
   of3:             { en: "of 3", si: "/ 3 න්" },
-  clockDrawing:    { en: "Clock Drawing Test", si: "ඔරලෝසු ඇඳීමේ පරීක්ෂණය" },
-  clockInstr:      { en: "Ask the patient to draw a clock showing 11:10.", si: "රෝගියාට 11:10 පෙන්වන ඔරලෝසුවක් ඇඳීමට කියන්න." },
-  clockNormal:     { en: "Normal (all correct)", si: "සාමාන්‍ය (සියල්ල නිවැරදි)" },
-  clockAbnormal:   { en: "Abnormal", si: "අසාමාන්‍ය" },
-  autoScore:       { en: "Auto-calculated score", si: "ස්වයංක්‍රීයව ගණනය කළ ලකුණ" },
+  orientationTest: { en: "Orientation in Time and Space", si: "කාලය සහ අවකාශය පිළිබඳ දිශානතිය" },
+  orientationInstr:{ en: "Ask: What is today's full date? Where are you now (home, clinic, etc.)?", si: "අසන්න: අද සම්පූර්ණ දිනය කුමක්ද? ඔබ දැන් සිටින්නේ කොහේද (නිවස, රෝහල, ආදිය)?" },
+  yesCorrect:      { en: "Yes – Correct", si: "ඔව් – නිවැරදි" },
+  noWrong:         { en: "No – Wrong", si: "නැත – වැරදි" },
 
   // locomotion
   tugTest:         { en: "Timed Up & Go Test", si: "කාලගත නැගිටීම සහ ඇවිදීම පරීක්ෂණය" },
@@ -181,7 +180,6 @@ const SL: Record<string, { en: string; si: string }> = {
 };
 
 // ── Status options per domain ────────────────────────────────────
-const COGNITION_STATUSES  = ["Not Assessed", "Normal", "Mild Impairment", "Moderate Impairment", "Severe Impairment"];
 const LOCOMOTION_STATUSES = ["Not Assessed", "Normal", "Mild Limitation", "Moderate Limitation", "Severe Limitation"];
 const VITALITY_STATUSES   = ["Not Assessed", "Normal", "At Risk", "Malnourished"];
 const HEARING_STATUSES    = ["Not Assessed", "Normal", "Mild Loss", "Moderate Loss", "Severe Loss"];
@@ -226,12 +224,12 @@ const PatientAssessment = () => {
   const updateForm = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
   // ── Interactive test state ─────────────────────────────────────
-  // Cognition: word recall + clock drawing
+  // Cognition: word recall + orientation
   const [wordSetIdx] = useState(() => Math.floor(Math.random() * WORD_SETS.en.length));
   const [wordsVisible, setWordsVisible] = useState(false);
   const [recallPhase, setRecallPhase] = useState(false);
   const [wordsRecalled, setWordsRecalled] = useState<number | null>(null);
-  const [clockDrawing, setClockDrawing] = useState<"normal" | "abnormal" | null>(null);
+  const [orientationCorrect, setOrientationCorrect] = useState<boolean | null>(null);
 
   // Locomotion: TUG timer
   const [timerRunning, setTimerRunning] = useState(false);
@@ -257,17 +255,11 @@ const PatientAssessment = () => {
 
   // ── Auto-calc: cognition ───────────────────────────────────────
   useEffect(() => {
-    if (wordsRecalled !== null && clockDrawing !== null) {
-      const recallPart = wordsRecalled * 5;  // 0-15
-      const clockPart = clockDrawing === "normal" ? 15 : 5;
-      const score = Math.min(recallPart + clockPart, 30);
-      updateForm("cognitionScore", String(score));
-      if (score >= 24) updateForm("cognitionStatus", "Normal");
-      else if (score >= 18) updateForm("cognitionStatus", "Mild Impairment");
-      else if (score >= 10) updateForm("cognitionStatus", "Moderate Impairment");
-      else updateForm("cognitionStatus", "Severe Impairment");
+    if (wordsRecalled !== null && orientationCorrect !== null) {
+      const allCorrect = wordsRecalled === 3 && orientationCorrect;
+      updateForm("cognitionStatus", allCorrect ? "Normal" : "Impaired");
     }
-  }, [wordsRecalled, clockDrawing]);
+  }, [wordsRecalled, orientationCorrect]);
 
   // ── Auto-calc: TUG ────────────────────────────────────────────
   useEffect(() => {
@@ -550,24 +542,21 @@ const PatientAssessment = () => {
                 )}
               </View>
 
-              {/* Clock Drawing */}
+              {/* Orientation in Time and Space */}
               <View style={[styles.testBox, { marginTop: sc(12) }]}>
-                <Text style={styles.testTitle}>{t("clockDrawing")}</Text>
-                <Text style={styles.testInstr}>{t("clockInstr")}</Text>
-                <View style={styles.btnRow}>
-                  <OptBtn label={t("clockNormal")} sel={clockDrawing === "normal"} onPress={() => setClockDrawing("normal")} color="#10B981" />
-                  <OptBtn label={t("clockAbnormal")} sel={clockDrawing === "abnormal"} onPress={() => setClockDrawing("abnormal")} color="#EF4444" />
+                <Text style={styles.testTitle}>{t("orientationTest")}</Text>
+                <Text style={styles.testInstr}>{t("orientationInstr")}</Text>
+                <View style={styles.row}>
+                  <OptBtn label={t("yesCorrect")} sel={orientationCorrect === true} onPress={() => setOrientationCorrect(true)} color="#10B981" />
+                  <OptBtn label={t("noWrong")} sel={orientationCorrect === false} onPress={() => setOrientationCorrect(false)} color="#EF4444" />
                 </View>
               </View>
 
-              {form.cognitionScore !== "" && (
-                <View style={styles.scoreBadge}>
-                  <Ionicons name="calculator-outline" size={sc(18)} color="#6366F1" />
-                  <Text style={styles.scoreText}>{t("autoScore")}: {form.cognitionScore}/30</Text>
-                </View>
-              )}
               <Text style={styles.fieldLabel}>{t("status")}</Text>
-              <StatusChips statuses={COGNITION_STATUSES} value={form.cognitionStatus} onChange={(v) => updateForm("cognitionStatus", v)} />
+              <View style={styles.row}>
+                <OptBtn label="Yes – Normal" sel={form.cognitionStatus === "Normal"} onPress={() => updateForm("cognitionStatus", "Normal")} color="#10B981" />
+                <OptBtn label="No – Impaired" sel={form.cognitionStatus === "Impaired"} onPress={() => updateForm("cognitionStatus", "Impaired")} color="#EF4444" />
+              </View>
               <Text style={styles.fieldLabel}>{t("notes")}</Text>
               <TextInput style={[styles.input, styles.multiline]} multiline value={form.cognitionNotes} onChangeText={(v) => updateForm("cognitionNotes", v)} placeholder={t("notes")} placeholderTextColor="#bbb" />
             </View>
