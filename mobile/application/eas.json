@@ -34,9 +34,9 @@
         
       },
       "env": {
-        "EXPO_PUBLIC_API_KEY":"https://api.armigorehab.com",
-        "EXPO_PUBLIC_NODE_STORAGE_URL":"https://api.armigorehab.com/uploads",
-        "EXPO_PUBLIC_API_URL":"https://api.armigorehab.com"
+        "EXPO_PUBLIC_API_KEY":"https://api.icopelanka.com",
+        "EXPO_PUBLIC_NODE_STORAGE_URL":"https://api.icopelanka.com/uploads",
+        "EXPO_PUBLIC_API_URL":"https://api.icopelanka.com"
       },
       "autoIncrement": true
     }

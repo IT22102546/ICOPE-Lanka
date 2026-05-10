@@ -80,7 +80,7 @@ const ScreenLayout = () => {
             headerStyle: { backgroundColor: "#fff" },
             headerTintColor: "black",
             headerTitleStyle: { fontWeight: "bold" },
-            title: "Physiotherapists",
+            title: "Health Care Staff",
           }}
         />
 
@@ -231,6 +231,20 @@ const ScreenLayout = () => {
 
         <Stack.Screen
           name="patient-assessment"
+          options={{
+            headerShown: false,
+          }}
+        />
+
+        <Stack.Screen
+          name="add-patient"
+          options={{
+            headerShown: false,
+          }}
+        />
+
+        <Stack.Screen
+          name="add-staff"
           options={{
             headerShown: false,
           }}

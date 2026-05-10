@@ -303,7 +303,7 @@ const ExerciseProgressScreen = () => {
         </View>
         <Text style={s.emptyTitle}>No Exercises Yet</Text>
         <Text style={s.emptySub}>
-          Exercises will appear here once assigned by your physiotherapist.
+          Exercises will appear here once assigned by your health care staff.
         </Text>
       </View>
     );

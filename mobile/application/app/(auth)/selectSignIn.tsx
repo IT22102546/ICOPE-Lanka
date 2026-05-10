@@ -38,7 +38,7 @@ const TEXT: Record<string, { en: string; si: string }> = {
   tagline:     { en: "Integrated Care for Older People", si: "වැඩිහිටියන් සඳහා ඒකාබද්ධ සත්කාර" },
   loginAs:     { en: "Login As", si: "ලෙස පිවිසෙන්න" },
   chooseRole:  { en: "Choose your role to continue", si: "ඉදිරියට යාමට ඔබේ භූමිකාව තෝරන්න" },
-  physio:      { en: "Physiotherapist", si: "භෞතචිකිත්සක" },
+  physio:      { en: "Health Care Staff", si: "සෞඛ්‍ය සේවා කාර්ය මණ්ඩලය" },
   physioDesc:  { en: "ICOPE assessments & patient care", si: "ICOPE තක්සේරු සහ රෝගී සත්කාර" },
   patient:     { en: "Patient / Elder", si: "රෝගී / වැඩිහිටි" },
   patientDesc: { en: "View your care plan & progress", si: "ඔබේ සත්කාර සැලැස්ම බලන්න" },
@@ -117,7 +117,7 @@ const SelectSignIn = () => {
       router.push("/(auth)/patient-coming-soon");
       return;
     }
-    router.push({ pathname: "/sign-in", params: { role: "Physiotherapist", backendRole: "PHYSIOTHERAPIST" } });
+    router.push({ pathname: "/sign-in", params: { role: "Health Care Staff", backendRole: "PHYSIOTHERAPIST" } });
   };
 
   return (

@@ -168,7 +168,7 @@ export default function ExamFinished() {
   };
 
   const handleBackToHome = () => {
-    router.replace("/(root)/(tabs)/home");
+    router.replace("/(root)/(screens)/doctor-patients");
   };
 
   /* -------------------- UI -------------------- */

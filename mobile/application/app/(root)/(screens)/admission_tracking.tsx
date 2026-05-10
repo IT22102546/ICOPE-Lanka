@@ -378,7 +378,7 @@ export default function AdmissionTrackingScreen() {
             const status = String(item.status || "SCHEDULED").toUpperCase();
             const statusBadgeColor = statusColor(status);
             const therapistName = item.physiotherapist?.name || "Not assigned";
-            const therapistRole = item.physiotherapist?.specialization || item.physiotherapist?.role || "Physiotherapist";
+            const therapistRole = item.physiotherapist?.specialization || item.physiotherapist?.role || "Health Care Staff";
 
             return (
               <View key={item.id} style={[styles.card, { borderLeftColor: statusBadgeColor }]}>
