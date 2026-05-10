@@ -21,7 +21,7 @@ const sc = (n: number) => Math.round((screenWidth / 390) * n);
 const vs = (n: number) => Math.round((screenHeight / 844) * n);
 
 // Same API base as all other screens
-const API = process.env.EXPO_PUBLIC_API_KEY;
+const API = process.env.EXPO_PUBLIC_API_URL;
 
 // ── Main Component ────────────────────────────────────────────────
 const AddStaff = () => {

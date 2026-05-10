@@ -82,7 +82,7 @@ const TOP_H         = Math.round(screenHeight * (isSmallScreen ? 0.28 : screenHe
 const HEADER_FONT   = isSmallScreen ? 24 : 30;
 const TAGLINE_MB    = isSmallScreen ? 28 : 50;
 
-const API = process.env.EXPO_PUBLIC_API_KEY;
+const API = process.env.EXPO_PUBLIC_API_URL;
 
 const isValidIdentifier = (value: string): boolean => {
   if (!value || value.trim() === "") return false;

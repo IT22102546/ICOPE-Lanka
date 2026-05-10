@@ -20,7 +20,7 @@ import useAuthStore from "@/stores/authStore";
 
 const { width: screenWidth } = Dimensions.get("window");
 const sc = (n: number) => Math.round((screenWidth / 390) * n);
-const API = process.env.EXPO_PUBLIC_API_KEY;
+const API = process.env.EXPO_PUBLIC_API_URL;
 
 interface HealthCareStaff {
   _id: string;

@@ -18,7 +18,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import useAuthStore from "@/stores/authStore";
 
-const API = process.env.EXPO_PUBLIC_API_KEY;
+const API = process.env.EXPO_PUBLIC_API_URL;
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 const sc = (size: number) => Math.round((screenWidth / 390) * size);
 const vs = (size: number) => Math.round((screenHeight / 844) * size);
@@ -30,15 +30,15 @@ const TXT: Record<string, { en: string; si: string }> = {
   cognition:       { en: "Cognition", si: "සංජානන" },
   cognitionDesc:   { en: "Word recall & orientation", si: "වචන සිහිපත් කිරීම සහ දිශානතිය" },
   locomotion:      { en: "Locomotion", si: "චලනය" },
-  locomotionDesc:  { en: "Timed Up & Go (TUG) test", si: "කාලගත නැගිටීම සහ ඇවිදීම (TUG)" },
+  locomotionDesc:  { en: "Chair rise test", si: "පුටු නැගිටීමේ පරීක්ෂණය" },
   vitality:        { en: "Vitality / Nutrition", si: "ජීවනකාරිත්වය / පෝෂණය" },
-  vitalityDesc:    { en: "MNA-SF nutritional screening", si: "MNA-SF පෝෂණ පරීක්ෂණය" },
+  vitalityDesc:    { en: "Weight loss & appetite screening", si: "බර අඩුවීම සහ ආහාර රුචිය පරීක්ෂණය" },
   hearing:         { en: "Hearing", si: "ශ්‍රවණය" },
-  hearingDesc:     { en: "Whisper test", si: "Whisper පරීක්ෂණය" },
+  hearingDesc:     { en: "Whisper / Audiometry test", si: "Whisper / ශ්‍රවණ පරීක්ෂණය" },
   vision:          { en: "Vision", si: "දෘෂ්ටි" },
-  visionDesc:      { en: "Finger counting test", si: "ඇඟිලි ගණන් කිරීමේ පරීක්ෂණය" },
+  visionDesc:      { en: "External eye check & visual acuity", si: "බාහිර ඇස් පරීක්ෂාව සහ දෘශ්‍ය තීව්‍රතාව" },
   mood:            { en: "Mood / Depression", si: "මනෝභාවය / මානසික අවපීඩනය" },
-  moodDesc:        { en: "GDS-4 screening", si: "GDS-4 පරීක්ෂණය" },
+  moodDesc:        { en: "Depressive symptoms screening", si: "අවපීඩන රෝග ලක්ෂණ පරීක්ෂණය" },
   carePlan:        { en: "Care Plan", si: "සත්කාර සැලැස්ම" },
   carePlanDesc:    { en: "Recommendations & follow-up", si: "නිර්දේශ සහ පසු විපරම්" },
 
@@ -56,82 +56,40 @@ const TXT: Record<string, { en: string; si: string }> = {
   yesCorrect:      { en: "Yes – Correct", si: "ඔව් – නිවැරදි" },
   noWrong:         { en: "No – Wrong", si: "නැත – වැරදි" },
 
-  // locomotion
-  tugTest:         { en: "Timed Up & Go Test", si: "කාලගත නැගිටීම සහ ඇවිදීම පරීක්ෂණය" },
-  tugInstr:        { en: "Patient sits in a chair, stands up, walks 3m, turns, walks back, sits down. Time it below.", si: "රෝගියා පුටුවක වාඩි වෙයි, නැගිටියි, මී 3 ඇවිදියි, හැරෙයි, ආපසු ඇවිදියි, වාඩි වෙයි. පහතින් කාලය මනින්න." },
-  startTimer:      { en: "Start Timer", si: "කාලය ආරම්භ කරන්න" },
-  stopTimer:       { en: "Stop Timer", si: "කාලය නවත්වන්න" },
-  resetTimer:      { en: "Reset", si: "යළි සකසන්න" },
-  seconds:         { en: "seconds", si: "තත්පර" },
-  walkingAidLabel: { en: "Walking Aid Used", si: "ඇවිදීමේ උපකරණය" },
-  aidNone:         { en: "None", si: "නැත" },
-  aidCane:         { en: "Cane", si: "සැරයටිය" },
-  aidWalker:       { en: "Walker", si: "වෝකර්" },
-  aidWheelchair:   { en: "Wheelchair", si: "රෝදපුටුව" },
+  // locomotion – chair rise
+  chairRiseTest:  { en: "Chair Rise Test", si: "පුටු නැගිටීමේ පරීක්ෂණය" },
+  chairRiseInstr: { en: "Ask the patient to rise from a chair 5 times without using arms. Did they complete 5 rises within 14 seconds?", si: "රෝගියාට අත් නොගෙන පුටුවෙන් 5 වරක් නැගිටීමට කියන්න. ඔවුන් තත්පර 14 ක් ඇතුළත 5 වරක් නැගිටිය හැකිද?" },
+  yes:            { en: "Yes – Completed", si: "ඔව් – සම්පූර්ණ කළා" },
+  no:             { en: "No – Could not complete", si: "නැත – සම්පූර්ණ කළ නොහැකි" },
 
-  // vitality MNA-SF
-  mnaQ1:     { en: "Has food intake declined over the past 3 months?", si: "පසුගිය මාස 3 තුළ ආහාර ගැනීම අඩු වී තිබේද?" },
-  mnaQ1_0:   { en: "Severe decrease", si: "දැඩි ලෙස අඩුවීම" },
-  mnaQ1_1:   { en: "Moderate decrease", si: "මධ්‍යම අඩුවීම" },
-  mnaQ1_2:   { en: "No decrease", si: "අඩුවීමක් නැත" },
-  mnaQ2:     { en: "Weight loss during the last 3 months?", si: "පසුගිය මාස 3 තුළ බර අඩු වූවාද?" },
-  mnaQ2_0:   { en: "Weight loss > 3 kg", si: "බර අඩුවීම > 3 kg" },
-  mnaQ2_1:   { en: "Does not know", si: "නොදනී" },
-  mnaQ2_2:   { en: "Weight loss 1-3 kg", si: "බර අඩුවීම 1-3 kg" },
-  mnaQ2_3:   { en: "No weight loss", si: "බර අඩුවීමක් නැත" },
-  mnaQ3:     { en: "Mobility?", si: "චලනය?" },
-  mnaQ3_0:   { en: "Bed or chair bound", si: "ඇඳට හෝ පුටුවට සීමා වී ඇත" },
-  mnaQ3_1:   { en: "Gets out of bed but doesn't go out", si: "ඇඳෙන් නැඟිටිය හැකි නමුත් බැහැර නොයයි" },
-  mnaQ3_2:   { en: "Goes out", si: "බැහැරට යයි" },
-  mnaQ4:     { en: "Psychological stress or acute disease in past 3 months?", si: "පසුගිය මාස 3 තුළ මානසික ආතතිය හෝ උග්‍ර රෝගයක්?" },
-  mnaQ4_0:   { en: "Yes", si: "ඔව්" },
-  mnaQ4_2:   { en: "No", si: "නැත" },
-  mnaQ5:     { en: "Neuropsychological problems?", si: "ස්නායු මනෝ ගැටලු?" },
-  mnaQ5_0:   { en: "Severe dementia or depression", si: "දරුණු ඩිමෙන්ශියාව හෝ අවපීඩනය" },
-  mnaQ5_1:   { en: "Mild dementia", si: "මෘදු ඩිමෙන්ශියාව" },
-  mnaQ5_2:   { en: "No problems", si: "ගැටලු නැත" },
-  mnaQ6:     { en: "BMI or calf circumference?", si: "BMI හෝ වස්සාපිට වටප්‍රමාණය?" },
-  mnaQ6_0:   { en: "BMI < 19", si: "BMI < 19" },
-  mnaQ6_1:   { en: "BMI 19 to < 21", si: "BMI 19 සිට < 21" },
-  mnaQ6_2:   { en: "BMI 21 to < 23", si: "BMI 21 සිට < 23" },
-  mnaQ6_3:   { en: "BMI ≥ 23", si: "BMI ≥ 23" },
-  mnaTotal:  { en: "MNA-SF Total Score", si: "MNA-SF මුළු ලකුණ" },
-  weight:    { en: "Weight (kg)", si: "බර (kg)" },
-  height:    { en: "Height (cm)", si: "උස (cm)" },
-  bmi:       { en: "BMI", si: "BMI" },
+  // vitality – weight loss & appetite
+  weightLossQ:    { en: "Weight loss: Have you unintentionally lost more than 3 kg over the last 3 months?", si: "බර අඩුවීම: පසුගිය මාස 3 තුළ ඔබ අනිච්ඡාවෙන් 3 kg ට වඩා බර අඩු වූවාද?" },
+  appetiteLossQ:  { en: "Appetite loss: Have you experienced loss of appetite?", si: "ආහාර රුචිය: ඔබට ආහාර රුචිය නැතිව ගිය බවක් දැනෙනවාද?" },
 
   // hearing
-  hearingTest:  { en: "Whisper Test", si: "Whisper පරීක්ෂණය" },
-  hearingInstr: { en: "Stand behind the patient at arm's length. Whisper the number below and ask what they heard. Test each ear separately.", si: "රෝගියාගේ පිටුපසින් අතේ දිගින් සිටින්න. පහත අංකය මෘදු ලෙස කියා ඔවුන්ට ඇසුණ දේ අසන්න. එක් එක් කන වෙන වෙනම පරීක්ෂා කරන්න." },
-  leftEar:      { en: "Left Ear", si: "වම් කන" },
-  rightEar:     { en: "Right Ear", si: "දකුණු කන" },
-  couldHear:    { en: "Could hear", si: "ඇසුණා" },
-  couldNotHear: { en: "Could not hear", si: "ඇසුණේ නැහැ" },
-  partially:    { en: "Partially", si: "අර්ධ වශයෙන්" },
-  hearingAid:   { en: "Uses Hearing Aid", si: "ශ්‍රවණ උපකරණ භාවිතා කරයි" },
-  whisperNum:   { en: "Whisper this number:", si: "මෙම අංකය මෘදු ලෙස කියන්න:" },
+  hearingTest:    { en: "Whisper Test / Screening Audiometry / Digits-triplet-in-noise", si: "Whisper / ශ්‍රවණ පරීක්ෂණය" },
+  hearingInstr:   { en: "Stand behind the patient at arm's length. Whisper the number below. Ask what they heard.", si: "රෝගියාගේ පිටුපසින් අතේ දිගින් සිටින්න. පහත අංකය මෘදු ලෙස කියා ඔවුන්ට ඇසුණ දේ අසන්න." },
+  whisperNum:     { en: "Whisper this number:", si: "මෙම අංකය මෘදු ලෙස කියන්න:" },
+  hearPass:       { en: "Pass", si: "සමත්" },
+  hearFail:       { en: "Fail", si: "අසමත්" },
+  hearingAid:     { en: "Uses Hearing Aid", si: "ශ්‍රවණ උපකරණ භාවිතා කරයි" },
 
   // vision
-  visionTest:   { en: "Finger Counting Test", si: "ඇඟිලි ගණන් කිරීමේ පරීක්ෂණය" },
-  visionInstr:  { en: "Show the number of fingers below at arm's length. Ask the patient to count. Test each eye separately (cover the other).", si: "පහත ඇඟිලි ගණන අතේ දිගින් පෙන්වන්න. රෝගියාට ගණන් කරන්නට කියන්න. එක් එක් ඇස වෙන වෙනම පරීක්ෂා කරන්න (අනෙක වසන්න)." },
-  newFingers:   { en: "New Number", si: "නව අංකය" },
-  howMany:      { en: "How many fingers?", si: "ඇඟිලි කීයක්ද?" },
-  leftEye:      { en: "Left Eye", si: "වම් ඇස" },
-  rightEye:     { en: "Right Eye", si: "දකුණු ඇස" },
-  correct:      { en: "Correct", si: "නිවැරදි" },
-  incorrect:    { en: "Incorrect", si: "වැරදි" },
-  glasses:      { en: "Uses Glasses", si: "කණ්ණාඩි භාවිතා කරයි" },
+  extEyeCheck:    { en: "1. External Eye Check", si: "1. බාහිර ඇස් පරීක්ෂාව" },
+  visualAcuity:   { en: "2. Visual Acuity Test (WHO chart)", si: "2. දෘශ්‍ය තීව්‍රතා පරීක්ෂාව (WHO)" },
+  distVision:     { en: "Distance vision (6/12 for each eye)", si: "දුර දෘෂ්ටිය (6/12 සෑම ඇසකටම)" },
+  nearVision:     { en: "Near vision (N6 for both eyes)", si: "ළඟ දෘෂ්ටිය (N6 දෙකු ඇසටම)" },
+  visionPass:     { en: "Pass", si: "සමත්" },
+  visionFail:     { en: "Fail", si: "අසමත්" },
+  glasses:        { en: "Uses Glasses/Spectacles", si: "කණ්ණාඩි භාවිතා කරයි" },
 
-  // mood GDS-4
-  moodTest:     { en: "Mood Assessment (GDS-4)", si: "මනෝභාව තක්සේරුව (GDS-4)" },
-  moodInstr:    { en: "Ask the patient each question below. Record their answer.", si: "රෝගියාගෙන් එක් එක් ප්‍රශ්නය අසන්න. පිළිතුර සටහන් කරන්න." },
-  gds1:         { en: "Are you basically satisfied with your life?", si: "ඔබ මූලික වශයෙන් ඔබේ ජීවිතයෙන් තෘප්තිමත්ද?" },
-  gds2:         { en: "Do you feel that your life is empty?", si: "ඔබේ ජීවිතය හිස් බව ඔබට දැනෙනවාද?" },
-  gds3:         { en: "Are you afraid something bad is going to happen to you?", si: "ඔබට නරක දෙයක් සිදුවීමට යන බවට බියක් දැනෙනවාද?" },
-  gds4:         { en: "Do you feel happy most of the time?", si: "ඔබ බොහෝ වේලාවට සතුටින්ද?" },
-  gdsYes:       { en: "Yes", si: "ඔව්" },
-  gdsNo:        { en: "No", si: "නැහැ" },
-  gdsScore:     { en: "GDS-4 Score", si: "GDS-4 ලකුණ" },
+  // mood – 2 questions
+  moodTest:       { en: "Depressive Symptoms Screening", si: "අවපීඩන රෝග ලක්ෂණ පරීක්ෂණය" },
+  moodInstr:      { en: "Over the past 2 weeks, have you been bothered by either of the following?", si: "පසුගිය සති 2 තුළ පහත දේ ගැන ඔබට කරදර ඇතිද?" },
+  moodQ1:         { en: "Feeling down, depressed or hopeless?", si: "කලකිරීමෙන්, ශෝකයෙන් හෝ බලාපොරොත්තු රහිතව?" },
+  moodQ2:         { en: "Little interest or pleasure in doing things?", si: "දේවල් කිරීමේ රුචිය හෝ සතුට අඩු?" },
+  moodYes:        { en: "Yes", si: "ඔව්" },
+  moodNo:         { en: "No", si: "නැහැ" },
 
   // care plan
   recommendations: { en: "Recommendations", si: "නිර්දේශ" },
@@ -210,6 +168,7 @@ const PatientAssessment = () => {
   const [submitting, setSubmitting] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [history, setHistory] = useState<any[]>([]);
+  const [showHistoryOnly, setShowHistoryOnly] = useState(false);
 
   // ── Form state (maps to backend Assessment model) ──────────────
   const [form, setForm] = useState({
@@ -231,94 +190,53 @@ const PatientAssessment = () => {
   const [wordsRecalled, setWordsRecalled] = useState<number | null>(null);
   const [orientationCorrect, setOrientationCorrect] = useState<boolean | null>(null);
 
-  // Locomotion: TUG timer
+  // Locomotion: chair rise test
+  const [chairRisePass, setChairRisePass] = useState<boolean | null>(null);
+
+  // Locomotion: timer (14 seconds)
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerMs, setTimerMs] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerStart = useRef(0);
 
-  // Vitality: MNA-SF answers
-  const [mna, setMna] = useState<Record<string, number | null>>({ q1: null, q2: null, q3: null, q4: null, q5: null, q6: null });
+  // Vitality: weight loss + appetite loss
+  const [weightLoss, setWeightLoss] = useState<boolean | null>(null);
+  const [appetiteLoss, setAppetiteLoss] = useState<boolean | null>(null);
 
-  // Hearing: whisper test
-  const [hearL, setHearL] = useState<string | null>(null);
-  const [hearR, setHearR] = useState<string | null>(null);
+  // Hearing: whisper test pass/fail
   const [whisperNum] = useState(() => Math.floor(Math.random() * 90) + 10);
+  const [hearingPass, setHearingPass] = useState<boolean | null>(null);
 
-  // Vision: finger counting
-  const [fingerCount, setFingerCount] = useState(() => Math.floor(Math.random() * 5) + 1);
-  const [visL, setVisL] = useState<boolean | null>(null);
-  const [visR, setVisR] = useState<boolean | null>(null);
+  // Vision: letter E with angles
+  const visionAngles = [0, 90, 270, 180];  // degrees: up, right, down, left
+  const [visionAngleIdx, setVisionAngleIdx] = useState(0);
+  const [visionResults, setVisionResults] = useState<boolean[]>([]);
 
-  // Mood: GDS-4
-  const [gds, setGds] = useState<Record<string, boolean | null>>({ g1: null, g2: null, g3: null, g4: null });
+  // Mood: 2 questions
+  const [moodQ1, setMoodQ1] = useState<boolean | null>(null);
+  const [moodQ2, setMoodQ2] = useState<boolean | null>(null);
 
   // ── Auto-calc: cognition ───────────────────────────────────────
   useEffect(() => {
     if (wordsRecalled !== null && orientationCorrect !== null) {
-      const allCorrect = wordsRecalled === 3 && orientationCorrect;
-      updateForm("cognitionStatus", allCorrect ? "Normal" : "Impaired");
+      const totalScore = wordsRecalled + (orientationCorrect ? 1 : 0);
+      updateForm("cognitionScore", `${totalScore}/4`);
+      if (totalScore === 4)      updateForm("cognitionStatus", "Normal");
+      else if (totalScore === 3) updateForm("cognitionStatus", "Mild Impairment");
+      else if (totalScore >= 1)  updateForm("cognitionStatus", "Moderate Impairment");
+      else                       updateForm("cognitionStatus", "Severe Impairment");
     }
   }, [wordsRecalled, orientationCorrect]);
 
-  // ── Auto-calc: TUG ────────────────────────────────────────────
+  // ── Auto-calc: locomotion ─────────────────────────────────────
   useEffect(() => {
-    const sec = parseFloat(form.tugTime);
-    if (!isNaN(sec) && sec > 0) {
-      if (sec <= 12) updateForm("locomotionStatus", "Normal");
-      else if (sec <= 20) updateForm("locomotionStatus", "Mild Limitation");
-      else if (sec <= 30) updateForm("locomotionStatus", "Moderate Limitation");
-      else updateForm("locomotionStatus", "Severe Limitation");
+    if (chairRisePass !== null) {
+      updateForm("locomotionStatus", chairRisePass ? "Normal" : "Limitation");
     }
-  }, [form.tugTime]);
+  }, [chairRisePass]);
 
-  // ── Auto-calc: MNA-SF ─────────────────────────────────────────
-  useEffect(() => {
-    const vals = Object.values(mna);
-    if (vals.every((v) => v !== null)) {
-      const total = vals.reduce((s, v) => s! + (v ?? 0), 0)!;
-      updateForm("mnaScore", String(total));
-      if (total >= 12) updateForm("vitalityStatus", "Normal");
-      else if (total >= 8) updateForm("vitalityStatus", "At Risk");
-      else updateForm("vitalityStatus", "Malnourished");
-    }
-  }, [mna]);
-
-  // ── Auto-calc: hearing ─────────────────────────────────────────
-  useEffect(() => {
-    if (hearL) updateForm("hearingLeft", hearL === "heard" ? "Normal" : hearL === "partial" ? "Mild Loss" : "Moderate Loss");
-    if (hearR) updateForm("hearingRight", hearR === "heard" ? "Normal" : hearR === "partial" ? "Mild Loss" : "Moderate Loss");
-  }, [hearL, hearR]);
-
-  // ── Auto-calc: vision ──────────────────────────────────────────
-  useEffect(() => {
-    if (visL !== null) updateForm("visionLeft", visL ? "Normal" : "Moderate Impairment");
-    if (visR !== null) updateForm("visionRight", visR ? "Normal" : "Moderate Impairment");
-  }, [visL, visR]);
-
-  // ── Auto-calc: GDS-4 ──────────────────────────────────────────
-  useEffect(() => {
-    if (Object.values(gds).every((v) => v !== null)) {
-      let score = 0;
-      if (gds.g1 === false) score++; // not satisfied → depressive
-      if (gds.g2 === true)  score++; // feels empty
-      if (gds.g3 === true)  score++; // afraid
-      if (gds.g4 === false) score++; // not happy → depressive
-      updateForm("gdsScore", String(score));
-      if (score <= 1) updateForm("moodStatus", "Normal");
-      else if (score <= 2) updateForm("moodStatus", "Possible Depression");
-      else updateForm("moodStatus", "Depression");
-    }
-  }, [gds]);
-
-  // ── Auto-calc: BMI ─────────────────────────────────────────────
-  useEffect(() => {
-    const w = parseFloat(form.weight), h = parseFloat(form.height);
-    if (!isNaN(w) && !isNaN(h) && h > 0) updateForm("bmi", (w / ((h / 100) ** 2)).toFixed(1));
-  }, [form.weight, form.height]);
-
-  // ── TUG Timer controls ─────────────────────────────────────────
-  const startTimer = useCallback(() => {
+  // ── Chair rise timer controls ──────────────────────────────────
+  const startChairRiseTimer = useCallback(() => {
     setTimerMs(0);
     setTimerRunning(true);
     Vibration.vibrate(100);
@@ -326,23 +244,51 @@ const PatientAssessment = () => {
     timerRef.current = setInterval(() => setTimerMs(Date.now() - timerStart.current), 100);
   }, []);
 
-  const stopTimer = useCallback(() => {
+  const stopChairRiseTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     setTimerRunning(false);
     Vibration.vibrate(200);
-    const sec = ((Date.now() - timerStart.current) / 1000).toFixed(1);
-    updateForm("tugTime", sec);
   }, []);
 
-  const resetTimer = useCallback(() => {
+  const resetChairRiseTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     setTimerRunning(false);
     setTimerMs(0);
-    updateForm("tugTime", "");
     updateForm("locomotionStatus", "Not Assessed");
   }, []);
 
   useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
+
+  // ── Auto-calc: vitality ────────────────────────────────────────
+  useEffect(() => {
+    if (weightLoss !== null && appetiteLoss !== null) {
+      updateForm("vitalityStatus", (!weightLoss && !appetiteLoss) ? "Normal" : "At Risk");
+    }
+  }, [weightLoss, appetiteLoss]);
+
+  // ── Auto-calc: hearing ─────────────────────────────────────────
+  useEffect(() => {
+    if (hearingPass !== null) {
+      updateForm("hearingLeft", hearingPass ? "Normal" : "Hearing Loss");
+      updateForm("hearingRight", hearingPass ? "Normal" : "Hearing Loss");
+    }
+  }, [hearingPass]);
+
+  // ── Auto-calc: vision ──────────────────────────────────────────
+  useEffect(() => {
+    if (visionResults.length >= 4) {
+      const pass = visionResults.slice(0, 4).filter(Boolean).length >= 3;
+      updateForm("visionLeft", pass ? "Normal" : "Impairment");
+      updateForm("visionRight", pass ? "Normal" : "Impairment");
+    }
+  }, [visionResults]);
+
+  // ── Auto-calc: mood ────────────────────────────────────────────
+  useEffect(() => {
+    if (moodQ1 !== null && moodQ2 !== null) {
+      updateForm("moodStatus", (!moodQ1 && !moodQ2) ? "Normal" : "Possible Depression");
+    }
+  }, [moodQ1, moodQ2]);
 
   // ── Load previous assessments ──────────────────────────────────
   useEffect(() => {
@@ -374,7 +320,7 @@ const PatientAssessment = () => {
       if (!token) throw new Error("Not authenticated");
 
       const body: any = {};
-      if (form.cognitionScore) body.cognitionScore = Number(form.cognitionScore);
+      if (form.cognitionScore) body.cognitionScore = form.cognitionScore;
       if (form.cognitionStatus !== "Not Assessed") body.cognitionStatus = form.cognitionStatus;
       if (form.cognitionNotes) body.cognitionNotes = form.cognitionNotes;
       if (form.tugTime) body.tugTime = Number(form.tugTime);
@@ -447,6 +393,15 @@ const PatientAssessment = () => {
     </TouchableOpacity>
   );
 
+  const RadioBtn = ({ label, sel, onPress, color = "#6366F1" }: { label: string; sel: boolean; onPress: () => void; color?: string }) => (
+    <TouchableOpacity onPress={onPress} style={styles.radioRow} activeOpacity={0.7}>
+      <View style={[styles.radioOuter, sel && { borderColor: color }]}>
+        {sel && <View style={[styles.radioInner, { backgroundColor: color }]} />}
+      </View>
+      <Text style={[styles.radioLabel, sel && { color, fontFamily: "Poppins-SemiBold" }]}>{label}</Text>
+    </TouchableOpacity>
+  );
+
   // ── Accordion header ────────────────────────────────────────────
   const DomainHeader = ({ domain }: { domain: typeof DOMAIN_CONFIG[0] }) => {
     const isOpen = expanded === domain.key;
@@ -476,19 +431,35 @@ const PatientAssessment = () => {
             <Ionicons name="arrow-back" size={sc(22)} color="#fff" />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>{t("assessment")}</Text>
+            <Text style={styles.headerTitle}>{showHistoryOnly ? "Assessment History" : t("assessment")}</Text>
             <Text style={styles.headerPatient}>{params.patientName || ""}</Text>
           </View>
-          <TouchableOpacity onPress={() => setLang(lang === "en" ? "si" : "en")} style={styles.headerLangBtn}>
-            <Ionicons name="language-outline" size={sc(18)} color="#fff" />
-            <Text style={styles.headerLangText}>{lang === "en" ? "සිං" : "EN"}</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: "row", gap: sc(8) }}>
+            {!showHistoryOnly && (
+              <TouchableOpacity onPress={() => setShowHistoryOnly(true)} style={styles.headerLangBtn}>
+                <Ionicons name="time-outline" size={sc(18)} color="#fff" />
+                <Text style={styles.headerLangText}>History</Text>
+              </TouchableOpacity>
+            )}
+            {showHistoryOnly && (
+              <TouchableOpacity onPress={() => setShowHistoryOnly(false)} style={styles.headerLangBtn}>
+                <Ionicons name="add-circle-outline" size={sc(18)} color="#fff" />
+                <Text style={styles.headerLangText}>New</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={() => setLang(lang === "en" ? "si" : "en")} style={styles.headerLangBtn}>
+              <Ionicons name="language-outline" size={sc(18)} color="#fff" />
+              <Text style={styles.headerLangText}>{lang === "en" ? "සිං" : "EN"}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </LinearGradient>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-        {/* ─── 1. Cognition ───────────────────────── */}
+        {!showHistoryOnly ? (
+          <>
+            {/* ─── Assessment Form ───────────────────────── */}
         <View style={styles.domainCard}>
           <DomainHeader domain={DOMAIN_CONFIG[0]} />
           {expanded === "cognition" && (
@@ -533,11 +504,13 @@ const PatientAssessment = () => {
                     <Text style={[styles.fieldLabel, { marginTop: sc(12) }]}>{t("wordsRecalled")}</Text>
                     <View style={styles.recallRow}>
                       {[0, 1, 2, 3].map((n) => (
-                        <TouchableOpacity key={n} style={[styles.recallBtn, wordsRecalled === n && { backgroundColor: "#6366F1", borderColor: "#6366F1" }]} onPress={() => setWordsRecalled(n)}>
+                        <TouchableOpacity key={n} style={[styles.recallBtn, wordsRecalled === n && { backgroundColor: n === 3 ? "#10B981" : "#EF4444", borderColor: n === 3 ? "#10B981" : "#EF4444" }]} onPress={() => setWordsRecalled(n)}>
                           <Text style={[styles.recallBtnText, wordsRecalled === n && { color: "#fff" }]}>{n} {t("of3")}</Text>
                         </TouchableOpacity>
                       ))}
                     </View>
+                    <Text style={[styles.fieldLabel, { marginTop: sc(8) }]}>Result:</Text>
+                    <Text style={[styles.scoreText, { color: wordsRecalled! > 0 ? "#10B981" : "#EF4444" }]}>{wordsRecalled} / 3 words recalled = {wordsRecalled} points</Text>
                   </>
                 )}
               </View>
@@ -546,138 +519,88 @@ const PatientAssessment = () => {
               <View style={[styles.testBox, { marginTop: sc(12) }]}>
                 <Text style={styles.testTitle}>{t("orientationTest")}</Text>
                 <Text style={styles.testInstr}>{t("orientationInstr")}</Text>
-                <View style={styles.row}>
-                  <OptBtn label={t("yesCorrect")} sel={orientationCorrect === true} onPress={() => setOrientationCorrect(true)} color="#10B981" />
-                  <OptBtn label={t("noWrong")} sel={orientationCorrect === false} onPress={() => setOrientationCorrect(false)} color="#EF4444" />
-                </View>
+                <RadioBtn label={t("yesCorrect")} sel={orientationCorrect === true} onPress={() => setOrientationCorrect(true)} color="#10B981" />
+                <RadioBtn label={t("noWrong")} sel={orientationCorrect === false} onPress={() => setOrientationCorrect(false)} color="#EF4444" />
               </View>
 
+              {form.cognitionScore !== "" && (
+                <View style={styles.scoreBadge}>
+                  <Ionicons name="calculator-outline" size={sc(18)} color="#6366F1" />
+                  <Text style={styles.scoreText}>Score: {form.cognitionScore} (Word Recall + Orientation)</Text>
+                </View>
+              )}
               <Text style={styles.fieldLabel}>{t("status")}</Text>
-              <View style={styles.row}>
-                <OptBtn label="Yes – Normal" sel={form.cognitionStatus === "Normal"} onPress={() => updateForm("cognitionStatus", "Normal")} color="#10B981" />
-                <OptBtn label="No – Impaired" sel={form.cognitionStatus === "Impaired"} onPress={() => updateForm("cognitionStatus", "Impaired")} color="#EF4444" />
-              </View>
+              <RadioBtn label="Pass (4/4)" sel={form.cognitionStatus === "Pass"} onPress={() => updateForm("cognitionStatus", "Pass")} color="#10B981" />
+              <RadioBtn label="Fail (<4/4)" sel={form.cognitionStatus === "Fail"} onPress={() => updateForm("cognitionStatus", "Fail")} color="#EF4444" />
               <Text style={styles.fieldLabel}>{t("notes")}</Text>
               <TextInput style={[styles.input, styles.multiline]} multiline value={form.cognitionNotes} onChangeText={(v) => updateForm("cognitionNotes", v)} placeholder={t("notes")} placeholderTextColor="#bbb" />
             </View>
           )}
         </View>
 
-        {/* ─── 2. Locomotion (TUG Timer) ──────────── */}
+        {/* ─── 2. Locomotion (Chair Rise Test) ──────────── */}
         <View style={styles.domainCard}>
           <DomainHeader domain={DOMAIN_CONFIG[1]} />
           {expanded === "locomotion" && (
             <View style={styles.domainBody}>
               <View style={styles.testBox}>
-                <Text style={styles.testTitle}>{t("tugTest")}</Text>
-                <Text style={styles.testInstr}>{t("tugInstr")}</Text>
+                <Text style={styles.testTitle}>{t("chairRiseTest")}</Text>
+                <Text style={styles.testInstr}>{t("chairRiseInstr")}</Text>
                 <View style={styles.timerDisplay}>
                   <Text style={styles.timerNumber}>{(timerMs / 1000).toFixed(1)}</Text>
-                  <Text style={styles.timerUnit}>{t("seconds")}</Text>
+                  <Text style={styles.timerUnit}>seconds</Text>
                 </View>
                 <View style={styles.timerRow}>
                   {!timerRunning ? (
-                    <TouchableOpacity style={[styles.timerBtn, { backgroundColor: "#10B981" }]} onPress={startTimer}>
+                    <TouchableOpacity style={[styles.timerBtn, { backgroundColor: "#10B981" }]} onPress={startChairRiseTimer}>
                       <Ionicons name="play" size={sc(22)} color="#fff" />
-                      <Text style={styles.timerBtnText}>{t("startTimer")}</Text>
+                      <Text style={styles.timerBtnText}>Start Timer</Text>
                     </TouchableOpacity>
                   ) : (
-                    <TouchableOpacity style={[styles.timerBtn, { backgroundColor: "#EF4444" }]} onPress={stopTimer}>
+                    <TouchableOpacity style={[styles.timerBtn, { backgroundColor: "#EF4444" }]} onPress={stopChairRiseTimer}>
                       <Ionicons name="stop" size={sc(22)} color="#fff" />
-                      <Text style={styles.timerBtnText}>{t("stopTimer")}</Text>
+                      <Text style={styles.timerBtnText}>Stop Timer</Text>
                     </TouchableOpacity>
                   )}
-                  <TouchableOpacity style={[styles.timerBtn, { backgroundColor: "#6B7280" }]} onPress={resetTimer}>
+                  <TouchableOpacity style={[styles.timerBtn, { backgroundColor: "#6B7280" }]} onPress={resetChairRiseTimer}>
                     <Ionicons name="refresh" size={sc(20)} color="#fff" />
-                    <Text style={styles.timerBtnText}>{t("resetTimer")}</Text>
+                    <Text style={styles.timerBtnText}>Reset</Text>
                   </TouchableOpacity>
                 </View>
               </View>
-
-              <Text style={styles.fieldLabel}>{t("walkingAidLabel")}</Text>
-              <View style={styles.chipRow}>
-                {([["", "aidNone"], ["Cane", "aidCane"], ["Walker", "aidWalker"], ["Wheelchair", "aidWheelchair"]] as const).map(([val, key]) => (
-                  <TouchableOpacity key={key} onPress={() => updateForm("walkingAid", val)} style={[styles.statusChip, form.walkingAid === val && { backgroundColor: "#F59E0B20", borderColor: "#F59E0B" }]}>
-                    <Text style={[styles.statusChipText, form.walkingAid === val && { color: "#F59E0B", fontFamily: "Poppins-SemiBold" }]}>{t(key)}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              {timerMs > 0 && (
+                <View style={styles.scoreBadge}>
+                  <Ionicons name="stopwatch-outline" size={sc(18)} color="#F59E0B" />
+                  <Text style={styles.scoreText}>Time: {(timerMs / 1000).toFixed(1)}s {timerMs / 1000 <= 14 ? "✓ Pass" : "✗ Fail"}</Text>
+                </View>
+              )}
               <Text style={styles.fieldLabel}>{t("status")}</Text>
-              <StatusChips statuses={LOCOMOTION_STATUSES} value={form.locomotionStatus} onChange={(v) => updateForm("locomotionStatus", v)} />
+              <RadioBtn label="Pass" sel={form.locomotionStatus === "Pass"} onPress={() => updateForm("locomotionStatus", "Pass")} color="#10B981" />
+              <RadioBtn label="Fail" sel={form.locomotionStatus === "Fail"} onPress={() => updateForm("locomotionStatus", "Fail")} color="#EF4444" />
               <Text style={styles.fieldLabel}>{t("notes")}</Text>
               <TextInput style={[styles.input, styles.multiline]} multiline value={form.locomotionNotes} onChangeText={(v) => updateForm("locomotionNotes", v)} placeholderTextColor="#bbb" />
             </View>
           )}
         </View>
 
-        {/* ─── 3. Vitality / Nutrition (MNA-SF) ───── */}
+        {/* ─── 3. Vitality / Nutrition ───── */}
         <View style={styles.domainCard}>
           <DomainHeader domain={DOMAIN_CONFIG[2]} />
           {expanded === "vitality" && (
             <View style={styles.domainBody}>
-              {/* Q1 */}
               <View style={styles.questionBox}>
-                <Text style={styles.questionText}>{t("mnaQ1")}</Text>
-                <OptBtn label={t("mnaQ1_0")} sel={mna.q1 === 0} onPress={() => setMna(p => ({ ...p, q1: 0 }))} color="#EF4444" />
-                <OptBtn label={t("mnaQ1_1")} sel={mna.q1 === 1} onPress={() => setMna(p => ({ ...p, q1: 1 }))} color="#F59E0B" />
-                <OptBtn label={t("mnaQ1_2")} sel={mna.q1 === 2} onPress={() => setMna(p => ({ ...p, q1: 2 }))} color="#10B981" />
+                <Text style={styles.questionText}>{t("weightLossQ")}</Text>
+                <RadioBtn label="Yes" sel={weightLoss === true} onPress={() => setWeightLoss(true)} color="#EF4444" />
+                <RadioBtn label="No" sel={weightLoss === false} onPress={() => setWeightLoss(false)} color="#10B981" />
               </View>
-              {/* Q2 */}
               <View style={styles.questionBox}>
-                <Text style={styles.questionText}>{t("mnaQ2")}</Text>
-                <OptBtn label={t("mnaQ2_0")} sel={mna.q2 === 0} onPress={() => setMna(p => ({ ...p, q2: 0 }))} color="#EF4444" />
-                <OptBtn label={t("mnaQ2_1")} sel={mna.q2 === 1} onPress={() => setMna(p => ({ ...p, q2: 1 }))} color="#F59E0B" />
-                <OptBtn label={t("mnaQ2_2")} sel={mna.q2 === 2} onPress={() => setMna(p => ({ ...p, q2: 2 }))} color="#F59E0B" />
-                <OptBtn label={t("mnaQ2_3")} sel={mna.q2 === 3} onPress={() => setMna(p => ({ ...p, q2: 3 }))} color="#10B981" />
+                <Text style={styles.questionText}>{t("appetiteLossQ")}</Text>
+                <RadioBtn label="Yes" sel={appetiteLoss === true} onPress={() => setAppetiteLoss(true)} color="#EF4444" />
+                <RadioBtn label="No" sel={appetiteLoss === false} onPress={() => setAppetiteLoss(false)} color="#10B981" />
               </View>
-              {/* Q3 */}
-              <View style={styles.questionBox}>
-                <Text style={styles.questionText}>{t("mnaQ3")}</Text>
-                <OptBtn label={t("mnaQ3_0")} sel={mna.q3 === 0} onPress={() => setMna(p => ({ ...p, q3: 0 }))} color="#EF4444" />
-                <OptBtn label={t("mnaQ3_1")} sel={mna.q3 === 1} onPress={() => setMna(p => ({ ...p, q3: 1 }))} color="#F59E0B" />
-                <OptBtn label={t("mnaQ3_2")} sel={mna.q3 === 2} onPress={() => setMna(p => ({ ...p, q3: 2 }))} color="#10B981" />
-              </View>
-              {/* Q4 */}
-              <View style={styles.questionBox}>
-                <Text style={styles.questionText}>{t("mnaQ4")}</Text>
-                <OptBtn label={t("mnaQ4_0")} sel={mna.q4 === 0} onPress={() => setMna(p => ({ ...p, q4: 0 }))} color="#EF4444" />
-                <OptBtn label={t("mnaQ4_2")} sel={mna.q4 === 2} onPress={() => setMna(p => ({ ...p, q4: 2 }))} color="#10B981" />
-              </View>
-              {/* Q5 */}
-              <View style={styles.questionBox}>
-                <Text style={styles.questionText}>{t("mnaQ5")}</Text>
-                <OptBtn label={t("mnaQ5_0")} sel={mna.q5 === 0} onPress={() => setMna(p => ({ ...p, q5: 0 }))} color="#EF4444" />
-                <OptBtn label={t("mnaQ5_1")} sel={mna.q5 === 1} onPress={() => setMna(p => ({ ...p, q5: 1 }))} color="#F59E0B" />
-                <OptBtn label={t("mnaQ5_2")} sel={mna.q5 === 2} onPress={() => setMna(p => ({ ...p, q5: 2 }))} color="#10B981" />
-              </View>
-              {/* Q6 */}
-              <View style={styles.questionBox}>
-                <Text style={styles.questionText}>{t("mnaQ6")}</Text>
-                <OptBtn label={t("mnaQ6_0")} sel={mna.q6 === 0} onPress={() => setMna(p => ({ ...p, q6: 0 }))} color="#EF4444" />
-                <OptBtn label={t("mnaQ6_1")} sel={mna.q6 === 1} onPress={() => setMna(p => ({ ...p, q6: 1 }))} color="#F59E0B" />
-                <OptBtn label={t("mnaQ6_2")} sel={mna.q6 === 2} onPress={() => setMna(p => ({ ...p, q6: 2 }))} color="#F59E0B" />
-                <OptBtn label={t("mnaQ6_3")} sel={mna.q6 === 3} onPress={() => setMna(p => ({ ...p, q6: 3 }))} color="#10B981" />
-              </View>
-
-              {form.mnaScore !== "" && (
-                <View style={styles.scoreBadge}>
-                  <Ionicons name="calculator-outline" size={sc(18)} color="#10B981" />
-                  <Text style={styles.scoreText}>{t("mnaTotal")}: {form.mnaScore}/14</Text>
-                </View>
-              )}
-              <View style={styles.row}>
-                <View style={styles.halfField}>
-                  <Text style={styles.fieldLabel}>{t("weight")}</Text>
-                  <TextInput style={styles.input} keyboardType="numeric" value={form.weight} onChangeText={(v) => updateForm("weight", v)} placeholderTextColor="#bbb" />
-                </View>
-                <View style={styles.halfField}>
-                  <Text style={styles.fieldLabel}>{t("height")}</Text>
-                  <TextInput style={styles.input} keyboardType="numeric" value={form.height} onChangeText={(v) => updateForm("height", v)} placeholderTextColor="#bbb" />
-                </View>
-              </View>
-              {form.bmi !== "" && <View style={styles.scoreBadge}><Text style={styles.scoreText}>{t("bmi")}: {form.bmi}</Text></View>}
               <Text style={styles.fieldLabel}>{t("status")}</Text>
-              <StatusChips statuses={VITALITY_STATUSES} value={form.vitalityStatus} onChange={(v) => updateForm("vitalityStatus", v)} />
+              <RadioBtn label="Pass" sel={form.vitalityStatus === "Pass"} onPress={() => updateForm("vitalityStatus", "Pass")} color="#10B981" />
+              <RadioBtn label="Fail" sel={form.vitalityStatus === "Fail"} onPress={() => updateForm("vitalityStatus", "Fail")} color="#EF4444" />
               <Text style={styles.fieldLabel}>{t("notes")}</Text>
               <TextInput style={[styles.input, styles.multiline]} multiline value={form.vitalityNotes} onChangeText={(v) => updateForm("vitalityNotes", v)} placeholderTextColor="#bbb" />
             </View>
@@ -692,85 +615,88 @@ const PatientAssessment = () => {
               <View style={styles.testBox}>
                 <Text style={styles.testTitle}>{t("hearingTest")}</Text>
                 <Text style={styles.testInstr}>{t("hearingInstr")}</Text>
-
                 <View style={styles.whisperDisplay}>
                   <Text style={styles.whisperLabel}>{t("whisperNum")}</Text>
                   <Text style={styles.whisperNumber}>{whisperNum}</Text>
                 </View>
-
-                <Text style={[styles.fieldLabel, { marginTop: sc(16), fontSize: sc(15), fontFamily: "Poppins-SemiBold" }]}>{t("leftEar")}</Text>
-                <View style={styles.btnRow}>
-                  <OptBtn label={t("couldHear")} sel={hearL === "heard"} onPress={() => setHearL("heard")} color="#10B981" />
-                  <OptBtn label={t("partially")} sel={hearL === "partial"} onPress={() => setHearL("partial")} color="#F59E0B" />
-                  <OptBtn label={t("couldNotHear")} sel={hearL === "not_heard"} onPress={() => setHearL("not_heard")} color="#EF4444" />
-                </View>
-                <Text style={[styles.fieldLabel, { marginTop: sc(12), fontSize: sc(15), fontFamily: "Poppins-SemiBold" }]}>{t("rightEar")}</Text>
-                <View style={styles.btnRow}>
-                  <OptBtn label={t("couldHear")} sel={hearR === "heard"} onPress={() => setHearR("heard")} color="#10B981" />
-                  <OptBtn label={t("partially")} sel={hearR === "partial"} onPress={() => setHearR("partial")} color="#F59E0B" />
-                  <OptBtn label={t("couldNotHear")} sel={hearR === "not_heard"} onPress={() => setHearR("not_heard")} color="#EF4444" />
-                </View>
+                <RadioBtn label="Pass" sel={hearingPass === true} onPress={() => setHearingPass(true)} color="#10B981" />
+                <RadioBtn label="Fail" sel={hearingPass === false} onPress={() => setHearingPass(false)} color="#EF4444" />
               </View>
-
               <View style={styles.switchRow}>
                 <Text style={styles.switchLabel}>{t("hearingAid")}</Text>
                 <Switch value={form.hearingAid} onValueChange={(v) => updateForm("hearingAid", v)} trackColor={{ true: "#0E7C61" }} />
               </View>
-              <Text style={styles.fieldLabel}>{t("status")} ({t("left")})</Text>
-              <StatusChips statuses={HEARING_STATUSES} value={form.hearingLeft} onChange={(v) => updateForm("hearingLeft", v)} />
-              <Text style={styles.fieldLabel}>{t("status")} ({t("right")})</Text>
-              <StatusChips statuses={HEARING_STATUSES} value={form.hearingRight} onChange={(v) => updateForm("hearingRight", v)} />
+              <Text style={styles.fieldLabel}>{t("status")}</Text>
+              <RadioBtn label="Pass" sel={form.hearingLeft === "Pass"} onPress={() => { updateForm("hearingLeft", "Pass"); updateForm("hearingRight", "Pass"); }} color="#10B981" />
+              <RadioBtn label="Fail" sel={form.hearingLeft === "Fail"} onPress={() => { updateForm("hearingLeft", "Fail"); updateForm("hearingRight", "Fail"); }} color="#EF4444" />
               <Text style={styles.fieldLabel}>{t("notes")}</Text>
               <TextInput style={[styles.input, styles.multiline]} multiline value={form.hearingNotes} onChangeText={(v) => updateForm("hearingNotes", v)} placeholderTextColor="#bbb" />
             </View>
           )}
         </View>
 
-        {/* ─── 5. Vision (Finger Counting) ────────── */}
+        {/* ─── 5. Vision (Letter E Angles Test) ────────── */}
         <View style={styles.domainCard}>
           <DomainHeader domain={DOMAIN_CONFIG[4]} />
           {expanded === "vision" && (
             <View style={styles.domainBody}>
               <View style={styles.testBox}>
-                <Text style={styles.testTitle}>{t("visionTest")}</Text>
-                <Text style={styles.testInstr}>{t("visionInstr")}</Text>
+                <Text style={styles.testTitle}>Visual Acuity Test – Letter E</Text>
+                <Text style={styles.testInstr}>Can the patient see the letter E in the correct orientation? Test both eyes together.</Text>
 
-                <View style={styles.fingerDisplay}>
-                  <Text style={styles.fingerNumber}>{fingerCount}</Text>
-                  <Text style={styles.fingerLabel}>{t("howMany")}</Text>
+                {/* Letter E with rotation */}
+                <View style={styles.letterDisplay}>
+                  <Text style={[styles.letterText, { transform: [{ rotate: `${visionAngles[visionAngleIdx]}deg` }] }]}>E</Text>
+                  <Text style={styles.letterCounter}>{visionAngleIdx + 1}/4</Text>
                 </View>
-                <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#8B5CF6" }]} onPress={() => setFingerCount(Math.floor(Math.random() * 5) + 1)}>
-                  <Ionicons name="shuffle" size={sc(20)} color="#fff" />
-                  <Text style={styles.actionBtnText}>{t("newFingers")}</Text>
-                </TouchableOpacity>
 
-                <Text style={[styles.fieldLabel, { marginTop: sc(16), fontSize: sc(15), fontFamily: "Poppins-SemiBold" }]}>{t("leftEye")}</Text>
-                <View style={styles.btnRow}>
-                  <OptBtn label={t("correct")} sel={visL === true} onPress={() => setVisL(true)} color="#10B981" />
-                  <OptBtn label={t("incorrect")} sel={visL === false} onPress={() => setVisL(false)} color="#EF4444" />
-                </View>
-                <Text style={[styles.fieldLabel, { marginTop: sc(12), fontSize: sc(15), fontFamily: "Poppins-SemiBold" }]}>{t("rightEye")}</Text>
-                <View style={styles.btnRow}>
-                  <OptBtn label={t("correct")} sel={visR === true} onPress={() => setVisR(true)} color="#10B981" />
-                  <OptBtn label={t("incorrect")} sel={visR === false} onPress={() => setVisR(false)} color="#EF4444" />
-                </View>
+                {/* Can you see this orientation? */}
+                {visionResults.length < 4 ? (
+                  <>
+                    <Text style={styles.fieldLabel}>Can you see the letter E in this direction?</Text>
+                    <View style={styles.row}>
+                      <TouchableOpacity
+                        style={[styles.yesNoBtn, { backgroundColor: "#10B98120", borderColor: "#10B981" }]}
+                        onPress={() => { setVisionResults([...visionResults, true]); if (visionAngleIdx < 3) setVisionAngleIdx(visionAngleIdx + 1); }}
+                      >
+                        <Text style={{ color: "#10B981", fontFamily: "Poppins-SemiBold", fontSize: sc(16) }}>Yes</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.yesNoBtn, { backgroundColor: "#EF444420", borderColor: "#EF4444" }]}
+                        onPress={() => { setVisionResults([...visionResults, false]); if (visionAngleIdx < 3) setVisionAngleIdx(visionAngleIdx + 1); }}
+                      >
+                        <Text style={{ color: "#EF4444", fontFamily: "Poppins-SemiBold", fontSize: sc(16) }}>No</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={[styles.fieldLabel, { marginTop: sc(8) }]}>{visionResults.length}/4 orientations tested</Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={[styles.scoreText, { marginTop: sc(8), color: visionResults.filter(Boolean).length >= 3 ? "#10B981" : "#EF4444" }]}>
+                      {visionResults.filter(Boolean).length >= 3 ? "✓ Pass – 3 or more correct" : "✗ Fail – fewer than 3 correct"} ({visionResults.filter(Boolean).length}/4)
+                    </Text>
+                    <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#6B7280", marginTop: sc(8) }]} onPress={() => { setVisionResults([]); setVisionAngleIdx(0); }}>
+                      <Ionicons name="refresh" size={sc(18)} color="#fff" />
+                      <Text style={styles.actionBtnText}>Reset Test</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
               </View>
 
               <View style={styles.switchRow}>
-                <Text style={styles.switchLabel}>{t("glasses")}</Text>
+                <Text style={styles.switchLabel}>Uses Glasses/Spectacles</Text>
                 <Switch value={form.glassesUsed} onValueChange={(v) => updateForm("glassesUsed", v)} trackColor={{ true: "#0E7C61" }} />
               </View>
-              <Text style={styles.fieldLabel}>{t("status")} ({t("left")})</Text>
-              <StatusChips statuses={VISION_STATUSES} value={form.visionLeft} onChange={(v) => updateForm("visionLeft", v)} />
-              <Text style={styles.fieldLabel}>{t("status")} ({t("right")})</Text>
-              <StatusChips statuses={VISION_STATUSES} value={form.visionRight} onChange={(v) => updateForm("visionRight", v)} />
+              <Text style={styles.fieldLabel}>{t("status")}</Text>
+              <RadioBtn label="Pass – Normal" sel={form.visionLeft === "Normal"} onPress={() => { updateForm("visionLeft", "Normal"); updateForm("visionRight", "Normal"); }} color="#10B981" />
+              <RadioBtn label="Fail – Impairment" sel={form.visionLeft === "Impairment"} onPress={() => { updateForm("visionLeft", "Impairment"); updateForm("visionRight", "Impairment"); }} color="#EF4444" />
               <Text style={styles.fieldLabel}>{t("notes")}</Text>
               <TextInput style={[styles.input, styles.multiline]} multiline value={form.visionNotes} onChangeText={(v) => updateForm("visionNotes", v)} placeholderTextColor="#bbb" />
             </View>
           )}
         </View>
 
-        {/* ─── 6. Mood / Depression (GDS-4) ───────── */}
+        {/* ─── 6. Mood / Depression ───────── */}
         <View style={styles.domainCard}>
           <DomainHeader domain={DOMAIN_CONFIG[5]} />
           {expanded === "mood" && (
@@ -778,63 +704,29 @@ const PatientAssessment = () => {
               <View style={styles.testBox}>
                 <Text style={styles.testTitle}>{t("moodTest")}</Text>
                 <Text style={styles.testInstr}>{t("moodInstr")}</Text>
-
-                {/* Q1: Satisfied? No = depressive */}
                 <View style={styles.gdsQuestion}>
-                  <Text style={styles.gdsQuestionText}>1. {t("gds1")}</Text>
+                  <Text style={styles.gdsQuestionText}>1. {t("moodQ1")}</Text>
                   <View style={styles.gdsRow}>
-                    <TouchableOpacity onPress={() => setGds(p => ({ ...p, g1: true }))} style={[styles.gdsBtn, gds.g1 === true && { backgroundColor: "#10B98120", borderColor: "#10B981" }]}>
-                      <Text style={[styles.gdsBtnText, gds.g1 === true && { color: "#10B981" }]}>{t("gdsYes")}</Text>
+                    <TouchableOpacity onPress={() => setMoodQ1(true)} style={[styles.gdsBtn, moodQ1 === true && { backgroundColor: "#EF444420", borderColor: "#EF4444" }]}>
+                      <Text style={[styles.gdsBtnText, moodQ1 === true && { color: "#EF4444" }]}>{t("moodYes")}</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setGds(p => ({ ...p, g1: false }))} style={[styles.gdsBtn, gds.g1 === false && { backgroundColor: "#EF444420", borderColor: "#EF4444" }]}>
-                      <Text style={[styles.gdsBtnText, gds.g1 === false && { color: "#EF4444" }]}>{t("gdsNo")}</Text>
+                    <TouchableOpacity onPress={() => setMoodQ1(false)} style={[styles.gdsBtn, moodQ1 === false && { backgroundColor: "#10B98120", borderColor: "#10B981" }]}>
+                      <Text style={[styles.gdsBtnText, moodQ1 === false && { color: "#10B981" }]}>{t("moodNo")}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
-                {/* Q2: Empty? Yes = depressive */}
                 <View style={styles.gdsQuestion}>
-                  <Text style={styles.gdsQuestionText}>2. {t("gds2")}</Text>
+                  <Text style={styles.gdsQuestionText}>2. {t("moodQ2")}</Text>
                   <View style={styles.gdsRow}>
-                    <TouchableOpacity onPress={() => setGds(p => ({ ...p, g2: true }))} style={[styles.gdsBtn, gds.g2 === true && { backgroundColor: "#EF444420", borderColor: "#EF4444" }]}>
-                      <Text style={[styles.gdsBtnText, gds.g2 === true && { color: "#EF4444" }]}>{t("gdsYes")}</Text>
+                    <TouchableOpacity onPress={() => setMoodQ2(true)} style={[styles.gdsBtn, moodQ2 === true && { backgroundColor: "#EF444420", borderColor: "#EF4444" }]}>
+                      <Text style={[styles.gdsBtnText, moodQ2 === true && { color: "#EF4444" }]}>{t("moodYes")}</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setGds(p => ({ ...p, g2: false }))} style={[styles.gdsBtn, gds.g2 === false && { backgroundColor: "#10B98120", borderColor: "#10B981" }]}>
-                      <Text style={[styles.gdsBtnText, gds.g2 === false && { color: "#10B981" }]}>{t("gdsNo")}</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                {/* Q3: Afraid? Yes = depressive */}
-                <View style={styles.gdsQuestion}>
-                  <Text style={styles.gdsQuestionText}>3. {t("gds3")}</Text>
-                  <View style={styles.gdsRow}>
-                    <TouchableOpacity onPress={() => setGds(p => ({ ...p, g3: true }))} style={[styles.gdsBtn, gds.g3 === true && { backgroundColor: "#EF444420", borderColor: "#EF4444" }]}>
-                      <Text style={[styles.gdsBtnText, gds.g3 === true && { color: "#EF4444" }]}>{t("gdsYes")}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setGds(p => ({ ...p, g3: false }))} style={[styles.gdsBtn, gds.g3 === false && { backgroundColor: "#10B98120", borderColor: "#10B981" }]}>
-                      <Text style={[styles.gdsBtnText, gds.g3 === false && { color: "#10B981" }]}>{t("gdsNo")}</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                {/* Q4: Happy? No = depressive */}
-                <View style={styles.gdsQuestion}>
-                  <Text style={styles.gdsQuestionText}>4. {t("gds4")}</Text>
-                  <View style={styles.gdsRow}>
-                    <TouchableOpacity onPress={() => setGds(p => ({ ...p, g4: true }))} style={[styles.gdsBtn, gds.g4 === true && { backgroundColor: "#10B98120", borderColor: "#10B981" }]}>
-                      <Text style={[styles.gdsBtnText, gds.g4 === true && { color: "#10B981" }]}>{t("gdsYes")}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setGds(p => ({ ...p, g4: false }))} style={[styles.gdsBtn, gds.g4 === false && { backgroundColor: "#EF444420", borderColor: "#EF4444" }]}>
-                      <Text style={[styles.gdsBtnText, gds.g4 === false && { color: "#EF4444" }]}>{t("gdsNo")}</Text>
+                    <TouchableOpacity onPress={() => setMoodQ2(false)} style={[styles.gdsBtn, moodQ2 === false && { backgroundColor: "#10B98120", borderColor: "#10B981" }]}>
+                      <Text style={[styles.gdsBtnText, moodQ2 === false && { color: "#10B981" }]}>{t("moodNo")}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
               </View>
-
-              {form.gdsScore !== "" && (
-                <View style={styles.scoreBadge}>
-                  <Ionicons name="calculator-outline" size={sc(18)} color="#EC4899" />
-                  <Text style={styles.scoreText}>{t("gdsScore")}: {form.gdsScore}/4</Text>
-                </View>
-              )}
               <Text style={styles.fieldLabel}>{t("status")}</Text>
               <StatusChips statuses={MOOD_STATUSES} value={form.moodStatus} onChange={(v) => updateForm("moodStatus", v)} />
               <Text style={styles.fieldLabel}>{t("notes")}</Text>
@@ -865,10 +757,12 @@ const PatientAssessment = () => {
             </View>
           )}
         </View>
-
-        {/* ─── Previous assessments ───────────────── */}
-        <View style={styles.historySection}>
-          <View style={styles.historyTitleRow}>
+          </>
+        ) : (
+          <>
+            {/* ─── Previous assessments ───────────────── */}
+            <View style={styles.historySection}>
+              <View style={styles.historyTitleRow}>
             <Ionicons name="time-outline" size={sc(18)} color="#0E7C61" />
             <Text style={styles.historyTitle}>{t("history")}</Text>
             {history.length > 0 && (
@@ -887,26 +781,6 @@ const PatientAssessment = () => {
             </View>
           ) : (
             history.slice(0, 6).map((a, i) => {
-              const domainRows: { icon: string; color: string; label: string; status: string; score?: string }[] = [];
-              if (a.cognitionStatus && a.cognitionStatus !== "Not Assessed")
-                domainRows.push({ icon: "bulb-outline", color: "#6366F1", label: t("cognition"), status: sl(a.cognitionStatus), score: a.cognitionScore != null ? `${a.cognitionScore}/30` : undefined });
-              if (a.locomotionStatus && a.locomotionStatus !== "Not Assessed")
-                domainRows.push({ icon: "walk-outline", color: "#F59E0B", label: t("locomotion"), status: sl(a.locomotionStatus), score: a.tugTime != null ? `${a.tugTime}s TUG` : undefined });
-              if (a.vitalityStatus && a.vitalityStatus !== "Not Assessed")
-                domainRows.push({ icon: "nutrition-outline", color: "#10B981", label: t("vitality"), status: sl(a.vitalityStatus), score: a.mnaScore != null ? `MNA ${a.mnaScore}/14` : undefined });
-              if (a.hearingLeft && a.hearingLeft !== "Not Assessed")
-                domainRows.push({ icon: "ear-outline", color: "#3B82F6", label: t("hearing"), status: `L: ${sl(a.hearingLeft)} · R: ${sl(a.hearingRight || "Not Assessed")}` });
-              if (a.visionLeft && a.visionLeft !== "Not Assessed")
-                domainRows.push({ icon: "eye-outline", color: "#8B5CF6", label: t("vision"), status: `L: ${sl(a.visionLeft)} · R: ${sl(a.visionRight || "Not Assessed")}` });
-              if (a.moodStatus && a.moodStatus !== "Not Assessed")
-                domainRows.push({ icon: "happy-outline", color: "#EC4899", label: t("mood"), status: sl(a.moodStatus), score: a.gdsScore != null ? `GDS ${a.gdsScore}/4` : undefined });
-
-              const statusColor = (s: string) =>
-                s.includes("Normal") ? "#10B981" :
-                s.includes("Mild") || s.includes("At Risk") || s.includes("Possible") ? "#F59E0B" :
-                s.includes("Severe") || s.includes("Depression") || s.includes("Malnourished") ? "#EF4444" :
-                "#6B7280";
-
               const fmtDate = (iso: string) => {
                 try {
                   const d = new Date(iso);
@@ -914,9 +788,24 @@ const PatientAssessment = () => {
                 } catch { return iso; }
               };
 
+              const statusColor = (s: string) =>
+                s.includes("Pass") ? "#10B981" :
+                s.includes("Fail") ? "#EF4444" :
+                s.includes("Normal") ? "#10B981" :
+                s.includes("Mild") || s.includes("At Risk") || s.includes("Possible") ? "#F59E0B" :
+                s.includes("Severe") || s.includes("Depression") || s.includes("Malnourished") ? "#EF4444" :
+                "#6B7280";
+
+              const DetailRow = ({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) => (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>{label}</Text>
+                  <Text style={[styles.detailValue, { color: valueColor || "#0E7C61" }]}>{value}</Text>
+                </View>
+              );
+
               return (
                 <View key={a._id || i} style={styles.historyCard}>
-                  {/* Card header */}
+                  {/* Header */}
                   <View style={styles.historyCardHeader}>
                     <View style={styles.historyCardHeaderLeft}>
                       <View style={styles.historyIndexBadge}>
@@ -925,7 +814,7 @@ const PatientAssessment = () => {
                       <View>
                         <Text style={styles.historyDateText}>{fmtDate(a.createdAt)}</Text>
                         <Text style={styles.historySubText}>
-                          {domainRows.length} domain{domainRows.length !== 1 ? "s" : ""} assessed
+                          Assessment {history.length - i}
                         </Text>
                       </View>
                     </View>
@@ -937,58 +826,121 @@ const PatientAssessment = () => {
                     )}
                   </View>
 
-                  {/* Domain results */}
-                  {domainRows.length > 0 && (
-                    <View style={styles.domainResultGrid}>
-                      {domainRows.map((d, di) => {
-                        const sc2 = statusColor(d.status);
-                        return (
-                          <View key={di} style={styles.domainResultRow}>
-                            <View style={[styles.domainResultIcon, { backgroundColor: d.color + "15" }]}>
-                              <Ionicons name={d.icon as any} size={sc(15)} color={d.color} />
-                            </View>
-                            <View style={styles.domainResultText}>
-                              <Text style={styles.domainResultLabel}>{d.label}</Text>
-                              <Text style={[styles.domainResultStatus, { color: sc2 }]}>{d.status}</Text>
-                            </View>
-                            {d.score && (
-                              <View style={[styles.domainResultScore, { backgroundColor: d.color + "12" }]}>
-                                <Text style={[styles.domainResultScoreText, { color: d.color }]}>{d.score}</Text>
-                              </View>
-                            )}
-                          </View>
-                        );
-                      })}
-                    </View>
-                  )}
-
-                  {/* Vitals row */}
-                  {(a.weight || a.height || a.bmi) && (
-                    <View style={styles.vitalsRow}>
-                      {a.weight && <View style={styles.vitalChip}><Text style={styles.vitalChipText}>⚖ {a.weight} kg</Text></View>}
-                      {a.height && <View style={styles.vitalChip}><Text style={styles.vitalChipText}>↕ {a.height} cm</Text></View>}
-                      {a.bmi && <View style={styles.vitalChip}><Text style={styles.vitalChipText}>BMI {a.bmi}</Text></View>}
-                      {a.hearingAid && <View style={styles.vitalChip}><Text style={styles.vitalChipText}>🔉 Hearing Aid</Text></View>}
-                      {a.glassesUsed && <View style={styles.vitalChip}><Text style={styles.vitalChipText}>👓 Glasses</Text></View>}
-                    </View>
-                  )}
-
-                  {/* Care plan summary */}
-                  {(a.careRecommendations || a.followUpDate) && (
-                    <View style={styles.carePlanBox}>
-                      <View style={styles.carePlanHeader}>
-                        <Ionicons name="clipboard-outline" size={sc(13)} color="#0E7C61" />
-                        <Text style={styles.carePlanTitle}>Care Plan</Text>
-                      </View>
-                      {a.careRecommendations ? (
-                        <Text style={styles.carePlanText} numberOfLines={3}>{a.careRecommendations}</Text>
-                      ) : null}
-                      {a.followUpDate ? (
-                        <View style={styles.followUpRow}>
-                          <Ionicons name="calendar-outline" size={sc(12)} color="#0E7C61" />
-                          <Text style={styles.followUpText}>Follow-up: {a.followUpDate}</Text>
+                  {/* Cognition */}
+                  {a.cognitionStatus && a.cognitionStatus !== "Not Assessed" && (
+                    <View style={styles.detailSection}>
+                      <View style={styles.sectionHeader}>
+                        <Ionicons name="bulb-outline" size={sc(18)} color="#6366F1" />
+                        <Text style={styles.sectionTitle}>{t("cognition")}</Text>
+                        <View style={[styles.statusBadge, { backgroundColor: statusColor(a.cognitionStatus) + "20" }]}>
+                          <Text style={[styles.statusBadgeText, { color: statusColor(a.cognitionStatus) }]}>{sl(a.cognitionStatus)}</Text>
                         </View>
-                      ) : null}
+                      </View>
+                      {a.cognitionScore && <DetailRow label="Score" value={a.cognitionScore} valueColor="#6366F1" />}
+                      {a.cognitionNotes && <DetailRow label="Notes" value={a.cognitionNotes} />}
+                    </View>
+                  )}
+
+                  {/* Locomotion */}
+                  {a.locomotionStatus && a.locomotionStatus !== "Not Assessed" && (
+                    <View style={styles.detailSection}>
+                      <View style={styles.sectionHeader}>
+                        <Ionicons name="walk-outline" size={sc(18)} color="#F59E0B" />
+                        <Text style={styles.sectionTitle}>{t("locomotion")}</Text>
+                        <View style={[styles.statusBadge, { backgroundColor: statusColor(a.locomotionStatus) + "20" }]}>
+                          <Text style={[styles.statusBadgeText, { color: statusColor(a.locomotionStatus) }]}>{sl(a.locomotionStatus)}</Text>
+                        </View>
+                      </View>
+                      {a.tugTime && <DetailRow label="TUG Time" value={`${a.tugTime}s`} valueColor="#F59E0B" />}
+                      {a.locomotionNotes && <DetailRow label="Notes" value={a.locomotionNotes} />}
+                    </View>
+                  )}
+
+                  {/* Vitality */}
+                  {a.vitalityStatus && a.vitalityStatus !== "Not Assessed" && (
+                    <View style={styles.detailSection}>
+                      <View style={styles.sectionHeader}>
+                        <Ionicons name="nutrition-outline" size={sc(18)} color="#10B981" />
+                        <Text style={styles.sectionTitle}>{t("vitality")}</Text>
+                        <View style={[styles.statusBadge, { backgroundColor: statusColor(a.vitalityStatus) + "20" }]}>
+                          <Text style={[styles.statusBadgeText, { color: statusColor(a.vitalityStatus) }]}>{sl(a.vitalityStatus)}</Text>
+                        </View>
+                      </View>
+                      {a.mnaScore && <DetailRow label="MNA Score" value={`${a.mnaScore}/14`} valueColor="#10B981" />}
+                      {a.vitalityNotes && <DetailRow label="Notes" value={a.vitalityNotes} />}
+                    </View>
+                  )}
+
+                  {/* Hearing */}
+                  {a.hearingLeft && a.hearingLeft !== "Not Assessed" && (
+                    <View style={styles.detailSection}>
+                      <View style={styles.sectionHeader}>
+                        <Ionicons name="ear-outline" size={sc(18)} color="#3B82F6" />
+                        <Text style={styles.sectionTitle}>{t("hearing")}</Text>
+                      </View>
+                      <DetailRow label="Left Ear" value={sl(a.hearingLeft)} valueColor={statusColor(a.hearingLeft)} />
+                      {a.hearingRight && <DetailRow label="Right Ear" value={sl(a.hearingRight)} valueColor={statusColor(a.hearingRight)} />}
+                      {a.hearingAid && <DetailRow label="Hearing Aid" value="Yes" valueColor="#0E7C61" />}
+                      {a.hearingNotes && <DetailRow label="Notes" value={a.hearingNotes} />}
+                    </View>
+                  )}
+
+                  {/* Vision */}
+                  {a.visionLeft && a.visionLeft !== "Not Assessed" && (
+                    <View style={styles.detailSection}>
+                      <View style={styles.sectionHeader}>
+                        <Ionicons name="eye-outline" size={sc(18)} color="#8B5CF6" />
+                        <Text style={styles.sectionTitle}>{t("vision")}</Text>
+                      </View>
+                      <DetailRow label="Left Eye" value={sl(a.visionLeft)} valueColor={statusColor(a.visionLeft)} />
+                      {a.visionRight && <DetailRow label="Right Eye" value={sl(a.visionRight)} valueColor={statusColor(a.visionRight)} />}
+                      {a.glassesUsed && <DetailRow label="Glasses Used" value="Yes" valueColor="#0E7C61" />}
+                      {a.visionNotes && <DetailRow label="Notes" value={a.visionNotes} />}
+                    </View>
+                  )}
+
+                  {/* Mood */}
+                  {a.moodStatus && a.moodStatus !== "Not Assessed" && (
+                    <View style={styles.detailSection}>
+                      <View style={styles.sectionHeader}>
+                        <Ionicons name="happy-outline" size={sc(18)} color="#EC4899" />
+                        <Text style={styles.sectionTitle}>{t("mood")}</Text>
+                        <View style={[styles.statusBadge, { backgroundColor: statusColor(a.moodStatus) + "20" }]}>
+                          <Text style={[styles.statusBadgeText, { color: statusColor(a.moodStatus) }]}>{sl(a.moodStatus)}</Text>
+                        </View>
+                      </View>
+                      {a.gdsScore && <DetailRow label="GDS Score" value={`${a.gdsScore}/4`} valueColor="#EC4899" />}
+                      {a.moodNotes && <DetailRow label="Notes" value={a.moodNotes} />}
+                    </View>
+                  )}
+
+                  {/* Vitals */}
+                  {(a.weight || a.height || a.bmi) && (
+                    <View style={styles.detailSection}>
+                      <View style={styles.sectionHeader}>
+                        <Ionicons name="fitness-outline" size={sc(18)} color="#0E7C61" />
+                        <Text style={styles.sectionTitle}>Vitals</Text>
+                      </View>
+                      {a.weight && <DetailRow label="Weight" value={`${a.weight} kg`} />}
+                      {a.height && <DetailRow label="Height" value={`${a.height} cm`} />}
+                      {a.bmi && <DetailRow label="BMI" value={a.bmi} />}
+                    </View>
+                  )}
+
+                  {/* Care Plan */}
+                  {(a.careRecommendations || a.followUpDate) && (
+                    <View style={styles.detailSection}>
+                      <View style={styles.sectionHeader}>
+                        <Ionicons name="clipboard-outline" size={sc(18)} color="#0E7C61" />
+                        <Text style={styles.sectionTitle}>Care Plan</Text>
+                      </View>
+                      {a.careRecommendations && (
+                        <View style={styles.carePlanBox}>
+                          <Text style={styles.carePlanLabel}>Recommendations</Text>
+                          <Text style={styles.carePlanText}>{a.careRecommendations}</Text>
+                        </View>
+                      )}
+                      {a.followUpDate && <DetailRow label="Follow-up Date" value={a.followUpDate} />}
                     </View>
                   )}
                 </View>
@@ -996,8 +948,11 @@ const PatientAssessment = () => {
             })
           )}
         </View>
+        </>
+        )}
 
         {/* ─── Submit button ──────────────────────── */}
+        {!showHistoryOnly && (
         <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={submitting} activeOpacity={0.8}>
           <LinearGradient colors={["#0E7C61", "#14A87D"]} style={styles.submitGradient}>
             {submitting ? <ActivityIndicator color="#fff" /> : (
@@ -1008,6 +963,7 @@ const PatientAssessment = () => {
             )}
           </LinearGradient>
         </TouchableOpacity>
+        )}
 
         <View style={{ height: sc(40) }} />
       </ScrollView>
@@ -1146,6 +1102,28 @@ const styles = StyleSheet.create({
   submitBtn: { marginTop: sc(8) },
   submitGradient: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sc(8), paddingVertical: sc(16), borderRadius: sc(16) },
   submitText: { color: "#fff", fontSize: sc(17), fontFamily: "Poppins-Bold" },
+  radioRow: { flexDirection: "row", alignItems: "center", paddingVertical: sc(8), paddingHorizontal: sc(4) },
+  radioOuter: { width: sc(20), height: sc(20), borderRadius: sc(10), borderWidth: 2, borderColor: "#ccc", alignItems: "center", justifyContent: "center", marginRight: sc(10) },
+  radioInner: { width: sc(10), height: sc(10), borderRadius: sc(5) },
+  radioLabel: { fontSize: sc(14), fontFamily: "Poppins-Regular", color: "#374151" },
+  eyeTabRow: { flexDirection: "row", gap: sc(8), marginVertical: sc(10) },
+  eyeTab: { flex: 1, paddingVertical: sc(10), paddingHorizontal: sc(12), borderRadius: sc(8), borderWidth: 2, borderColor: "#ddd", alignItems: "center" },
+  eyeTabText: { fontSize: sc(13), fontFamily: "Poppins-SemiBold", color: "#666" },
+  letterDisplay: { backgroundColor: "#f5f5f5", borderRadius: sc(12), paddingVertical: sc(40), paddingHorizontal: sc(20), alignItems: "center", marginVertical: sc(16), minHeight: sc(200), justifyContent: "center" },
+  letterText: { fontSize: sc(120), fontFamily: "Poppins-Bold", color: "#1f2937" },
+  letterCounter: { fontSize: sc(14), fontFamily: "Poppins-Regular", color: "#999", marginTop: sc(8) },
+  yesNoBtn: { flex: 1, paddingVertical: sc(12), borderRadius: sc(8), borderWidth: 2, alignItems: "center" },
+
+  // Detail section styles
+  detailSection: { borderTopWidth: 1, borderTopColor: "#f3f4f6", paddingVertical: sc(12), paddingHorizontal: sc(14) },
+  sectionHeader: { flexDirection: "row", alignItems: "center", gap: sc(8), marginBottom: sc(10) },
+  sectionTitle: { flex: 1, fontSize: sc(13), fontFamily: "Poppins-SemiBold", color: "#222" },
+  statusBadge: { paddingHorizontal: sc(8), paddingVertical: sc(3), borderRadius: sc(6) },
+  statusBadgeText: { fontSize: sc(11), fontFamily: "Poppins-SemiBold" },
+  detailRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: sc(6), gap: sc(8) },
+  detailLabel: { fontSize: sc(12), fontFamily: "Poppins-Regular", color: "#666", flex: 1 },
+  detailValue: { fontSize: sc(13), fontFamily: "Poppins-SemiBold", textAlign: "right" },
+  carePlanLabel: { fontSize: sc(12), fontFamily: "Poppins-SemiBold", color: "#0E7C61", marginBottom: sc(6) },
 });
 
 export default PatientAssessment;

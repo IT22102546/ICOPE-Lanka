@@ -23,7 +23,7 @@ const sc = (n: number) => Math.round((screenWidth / 390) * n);
 const vs = (n: number) => Math.round((screenHeight / 844) * n);
 
 // Same pattern as doctor-patients.tsx
-const API = process.env.EXPO_PUBLIC_API_KEY;
+const API = process.env.EXPO_PUBLIC_API_URL;
 
 const PROVINCES = [
   "Western", "Central", "Southern", "Northern", "Eastern",

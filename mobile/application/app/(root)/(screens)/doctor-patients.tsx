@@ -20,7 +20,7 @@ import useAuthStore from "@/stores/authStore";
 
 const { width: screenWidth } = Dimensions.get("window");
 const sc = (n: number) => Math.round((screenWidth / 390) * n);
-const API = process.env.EXPO_PUBLIC_API_KEY;
+const API = process.env.EXPO_PUBLIC_API_URL;
 
 const TXT: Record<string, { en: string; si: string }> = {
   brand:          { en: "ICOPE Lanka", si: "ICOPE Lanka" },
@@ -82,16 +82,24 @@ const DoctorPatients = () => {
   const fetchPatients = useCallback(async () => {
     try {
       const token = await getAccessToken();
-      if (!token) return;
+      if (!token) {
+        console.error("No token available");
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
       const mineParam = isSuperAdmin && !showMine ? "" : "?mine=true";
-      const res = await fetch(`${API}/api/patients${mineParam}`, {
+      const url = `${API}/api/patients${mineParam}`;
+      console.log("Fetching from:", url);
+      const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Failed to fetch");
+      console.log("Fetch response status:", res.status, res.statusText);
+      if (!res.ok) throw new Error(`Server error: ${res.status} ${res.statusText}`);
       const data = await res.json();
       setPatients(data.patients || []);
     } catch (err: any) {
-      console.error("Fetch patients error:", err);
+      console.error("Fetch patients error:", err.message || err);
     } finally {
       setLoading(false);
       setRefreshing(false);
