@@ -530,8 +530,8 @@ const PatientAssessment = () => {
                 </View>
               )}
               <Text style={styles.fieldLabel}>{t("status")}</Text>
-              <RadioBtn label="Pass (4/4)" sel={form.cognitionStatus === "Pass"} onPress={() => updateForm("cognitionStatus", "Pass")} color="#10B981" />
-              <RadioBtn label="Fail (<4/4)" sel={form.cognitionStatus === "Fail"} onPress={() => updateForm("cognitionStatus", "Fail")} color="#EF4444" />
+              <RadioBtn label="Pass (4/4)" sel={form.cognitionStatus === "Normal"} onPress={() => updateForm("cognitionStatus", "Normal")} color="#10B981" />
+              <RadioBtn label="Fail (<4/4)" sel={form.cognitionStatus === "Impaired"} onPress={() => updateForm("cognitionStatus", "Impaired")} color="#EF4444" />
               <Text style={styles.fieldLabel}>{t("notes")}</Text>
               <TextInput style={[styles.input, styles.multiline]} multiline value={form.cognitionNotes} onChangeText={(v) => updateForm("cognitionNotes", v)} placeholder={t("notes")} placeholderTextColor="#bbb" />
             </View>
@@ -575,8 +575,8 @@ const PatientAssessment = () => {
                 </View>
               )}
               <Text style={styles.fieldLabel}>{t("status")}</Text>
-              <RadioBtn label="Pass" sel={form.locomotionStatus === "Pass"} onPress={() => updateForm("locomotionStatus", "Pass")} color="#10B981" />
-              <RadioBtn label="Fail" sel={form.locomotionStatus === "Fail"} onPress={() => updateForm("locomotionStatus", "Fail")} color="#EF4444" />
+              <RadioBtn label="Pass" sel={form.locomotionStatus === "Normal"} onPress={() => updateForm("locomotionStatus", "Normal")} color="#10B981" />
+              <RadioBtn label="Fail" sel={form.locomotionStatus === "Limitation"} onPress={() => updateForm("locomotionStatus", "Limitation")} color="#EF4444" />
               <Text style={styles.fieldLabel}>{t("notes")}</Text>
               <TextInput style={[styles.input, styles.multiline]} multiline value={form.locomotionNotes} onChangeText={(v) => updateForm("locomotionNotes", v)} placeholderTextColor="#bbb" />
             </View>
@@ -599,8 +599,8 @@ const PatientAssessment = () => {
                 <RadioBtn label="No" sel={appetiteLoss === false} onPress={() => setAppetiteLoss(false)} color="#10B981" />
               </View>
               <Text style={styles.fieldLabel}>{t("status")}</Text>
-              <RadioBtn label="Pass" sel={form.vitalityStatus === "Pass"} onPress={() => updateForm("vitalityStatus", "Pass")} color="#10B981" />
-              <RadioBtn label="Fail" sel={form.vitalityStatus === "Fail"} onPress={() => updateForm("vitalityStatus", "Fail")} color="#EF4444" />
+              <RadioBtn label="Pass" sel={form.vitalityStatus === "Normal"} onPress={() => updateForm("vitalityStatus", "Normal")} color="#10B981" />
+              <RadioBtn label="Fail" sel={form.vitalityStatus === "At Risk"} onPress={() => updateForm("vitalityStatus", "At Risk")} color="#EF4444" />
               <Text style={styles.fieldLabel}>{t("notes")}</Text>
               <TextInput style={[styles.input, styles.multiline]} multiline value={form.vitalityNotes} onChangeText={(v) => updateForm("vitalityNotes", v)} placeholderTextColor="#bbb" />
             </View>
@@ -627,8 +627,8 @@ const PatientAssessment = () => {
                 <Switch value={form.hearingAid} onValueChange={(v) => updateForm("hearingAid", v)} trackColor={{ true: "#0E7C61" }} />
               </View>
               <Text style={styles.fieldLabel}>{t("status")}</Text>
-              <RadioBtn label="Pass" sel={form.hearingLeft === "Pass"} onPress={() => { updateForm("hearingLeft", "Pass"); updateForm("hearingRight", "Pass"); }} color="#10B981" />
-              <RadioBtn label="Fail" sel={form.hearingLeft === "Fail"} onPress={() => { updateForm("hearingLeft", "Fail"); updateForm("hearingRight", "Fail"); }} color="#EF4444" />
+              <RadioBtn label="Pass" sel={form.hearingLeft === "Normal"} onPress={() => { updateForm("hearingLeft", "Normal"); updateForm("hearingRight", "Normal"); }} color="#10B981" />
+              <RadioBtn label="Fail" sel={form.hearingLeft === "Hearing Loss"} onPress={() => { updateForm("hearingLeft", "Hearing Loss"); updateForm("hearingRight", "Hearing Loss"); }} color="#EF4444" />
               <Text style={styles.fieldLabel}>{t("notes")}</Text>
               <TextInput style={[styles.input, styles.multiline]} multiline value={form.hearingNotes} onChangeText={(v) => updateForm("hearingNotes", v)} placeholderTextColor="#bbb" />
             </View>
@@ -837,6 +837,7 @@ const PatientAssessment = () => {
                         </View>
                       </View>
                       {a.cognitionScore && <DetailRow label="Score" value={a.cognitionScore} valueColor="#6366F1" />}
+                      {a.cognitionStatus && <DetailRow label="Status" value={sl(a.cognitionStatus)} />}
                       {a.cognitionNotes && <DetailRow label="Notes" value={a.cognitionNotes} />}
                     </View>
                   )}
@@ -852,6 +853,8 @@ const PatientAssessment = () => {
                         </View>
                       </View>
                       {a.tugTime && <DetailRow label="TUG Time" value={`${a.tugTime}s`} valueColor="#F59E0B" />}
+                      {a.walkingAid && <DetailRow label="Walking Aid" value={a.walkingAid} />}
+                      {a.locomotionStatus && <DetailRow label="Status" value={sl(a.locomotionStatus)} />}
                       {a.locomotionNotes && <DetailRow label="Notes" value={a.locomotionNotes} />}
                     </View>
                   )}
@@ -867,6 +870,10 @@ const PatientAssessment = () => {
                         </View>
                       </View>
                       {a.mnaScore && <DetailRow label="MNA Score" value={`${a.mnaScore}/14`} valueColor="#10B981" />}
+                      {a.weight && <DetailRow label="Weight" value={`${a.weight} kg`} />}
+                      {a.height && <DetailRow label="Height" value={`${a.height} cm`} />}
+                      {a.bmi && <DetailRow label="BMI" value={a.bmi.toString()} />}
+                      {a.vitalityStatus && <DetailRow label="Status" value={sl(a.vitalityStatus)} />}
                       {a.vitalityNotes && <DetailRow label="Notes" value={a.vitalityNotes} />}
                     </View>
                   )}
@@ -877,8 +884,11 @@ const PatientAssessment = () => {
                       <View style={styles.sectionHeader}>
                         <Ionicons name="ear-outline" size={sc(18)} color="#3B82F6" />
                         <Text style={styles.sectionTitle}>{t("hearing")}</Text>
+                        <View style={[styles.statusBadge, { backgroundColor: statusColor(a.hearingLeft || a.hearingRight) + "20" }]}>
+                          <Text style={[styles.statusBadgeText, { color: statusColor(a.hearingLeft || a.hearingRight) }]}>{sl(a.hearingLeft)}</Text>
+                        </View>
                       </View>
-                      <DetailRow label="Left Ear" value={sl(a.hearingLeft)} valueColor={statusColor(a.hearingLeft)} />
+                      {a.hearingLeft && <DetailRow label="Left Ear" value={sl(a.hearingLeft)} valueColor={statusColor(a.hearingLeft)} />}
                       {a.hearingRight && <DetailRow label="Right Ear" value={sl(a.hearingRight)} valueColor={statusColor(a.hearingRight)} />}
                       {a.hearingAid && <DetailRow label="Hearing Aid" value="Yes" valueColor="#0E7C61" />}
                       {a.hearingNotes && <DetailRow label="Notes" value={a.hearingNotes} />}
@@ -891,8 +901,11 @@ const PatientAssessment = () => {
                       <View style={styles.sectionHeader}>
                         <Ionicons name="eye-outline" size={sc(18)} color="#8B5CF6" />
                         <Text style={styles.sectionTitle}>{t("vision")}</Text>
+                        <View style={[styles.statusBadge, { backgroundColor: statusColor(a.visionLeft || a.visionRight) + "20" }]}>
+                          <Text style={[styles.statusBadgeText, { color: statusColor(a.visionLeft || a.visionRight) }]}>{sl(a.visionLeft)}</Text>
+                        </View>
                       </View>
-                      <DetailRow label="Left Eye" value={sl(a.visionLeft)} valueColor={statusColor(a.visionLeft)} />
+                      {a.visionLeft && <DetailRow label="Left Eye" value={sl(a.visionLeft)} valueColor={statusColor(a.visionLeft)} />}
                       {a.visionRight && <DetailRow label="Right Eye" value={sl(a.visionRight)} valueColor={statusColor(a.visionRight)} />}
                       {a.glassesUsed && <DetailRow label="Glasses Used" value="Yes" valueColor="#0E7C61" />}
                       {a.visionNotes && <DetailRow label="Notes" value={a.visionNotes} />}
@@ -910,20 +923,20 @@ const PatientAssessment = () => {
                         </View>
                       </View>
                       {a.gdsScore && <DetailRow label="GDS Score" value={`${a.gdsScore}/4`} valueColor="#EC4899" />}
+                      {a.moodStatus && <DetailRow label="Status" value={sl(a.moodStatus)} />}
                       {a.moodNotes && <DetailRow label="Notes" value={a.moodNotes} />}
                     </View>
                   )}
 
-                  {/* Vitals */}
-                  {(a.weight || a.height || a.bmi) && (
+                  {/* Referral */}
+                  {a.referralNeeded && (
                     <View style={styles.detailSection}>
                       <View style={styles.sectionHeader}>
-                        <Ionicons name="fitness-outline" size={sc(18)} color="#0E7C61" />
-                        <Text style={styles.sectionTitle}>Vitals</Text>
+                        <Ionicons name="alert-circle-outline" size={sc(18)} color="#DC2626" />
+                        <Text style={styles.sectionTitle}>Referral</Text>
                       </View>
-                      {a.weight && <DetailRow label="Weight" value={`${a.weight} kg`} />}
-                      {a.height && <DetailRow label="Height" value={`${a.height} cm`} />}
-                      {a.bmi && <DetailRow label="BMI" value={a.bmi} />}
+                      <DetailRow label="Referral Needed" value="Yes" valueColor="#DC2626" />
+                      {a.referralDetails && <DetailRow label="Details" value={a.referralDetails} />}
                     </View>
                   )}
 
@@ -941,6 +954,7 @@ const PatientAssessment = () => {
                         </View>
                       )}
                       {a.followUpDate && <DetailRow label="Follow-up Date" value={a.followUpDate} />}
+                      {a.referralNeeded && <DetailRow label="Referral Required" value="Yes" valueColor="#DC2626" />}
                     </View>
                   )}
                 </View>
