@@ -360,7 +360,16 @@ const PatientAssessment = () => {
         throw new Error(errData.message || "Failed");
       }
 
-      Alert.alert(t("brand"), t("success"), [
+      const finalScore =
+        ((wordsRecalled !== null && orientationCorrect !== null)
+          ? (wordsRecalled ?? 0) + (orientationCorrect === true ? 1 : 0) : 0)
+        + (form.locomotionStatus === "Normal" ? 1 : 0)
+        + ((weightLoss !== null && appetiteLoss !== null)
+          ? (weightLoss === false ? 1 : 0) + (appetiteLoss === false ? 1 : 0) : 0)
+        + (hearingPass === true ? 1 : 0)
+        + (visionResults.length >= 4 ? (visionResults.filter(Boolean).length >= 3 ? 1 : 0) : 0)
+        + ((moodQ1 !== null && moodQ2 !== null) ? (moodQ1 === false && moodQ2 === false ? 1 : 0) : 0);
+      Alert.alert(t("brand"), `${t("success")}\n\nTotal Score: ${finalScore} / 10`, [
         { text: "OK", onPress: () => router.back() },
       ]);
     } catch (err: any) {
@@ -421,6 +430,25 @@ const PatientAssessment = () => {
 
   // ── Word set for current language ──────────────────────────────
   const words = WORD_SETS[lang][wordSetIdx];
+
+  // ── Score summary (live, derived from interactive test state) ──
+  const _cognitionAssessed = wordsRecalled !== null && orientationCorrect !== null;
+  const _cognitionPts = (wordsRecalled ?? 0) + (orientationCorrect === true ? 1 : 0);
+  const _locomotionPts = form.locomotionStatus === "Normal" ? 1 : form.locomotionStatus !== "Not Assessed" ? 0 : null;
+  const _vitalityPts = (weightLoss !== null && appetiteLoss !== null)
+    ? (weightLoss === false ? 1 : 0) + (appetiteLoss === false ? 1 : 0) : null;
+  const _hearingPts = hearingPass === true ? 1 : hearingPass === false ? 0 : null;
+  const _visionPts = visionResults.length >= 4
+    ? (visionResults.filter(Boolean).length >= 3 ? 1 : 0) : null;
+  const _moodPts = (moodQ1 !== null && moodQ2 !== null)
+    ? (moodQ1 === false && moodQ2 === false ? 1 : 0) : null;
+  const _totalScore = (_cognitionAssessed ? _cognitionPts : 0)
+    + (_locomotionPts ?? 0) + (_vitalityPts ?? 0)
+    + (_hearingPts ?? 0) + (_visionPts ?? 0) + (_moodPts ?? 0);
+  const _anyAssessed = _cognitionAssessed || form.locomotionStatus !== "Not Assessed"
+    || weightLoss !== null || appetiteLoss !== null
+    || hearingPass !== null || visionResults.length >= 4
+    || moodQ1 !== null || moodQ2 !== null;
 
   return (
     <View style={styles.container}>
@@ -803,6 +831,24 @@ const PatientAssessment = () => {
                 </View>
               );
 
+              // ── Derive score from stored assessment fields ──────────
+              const hCogPts  = (() => { const m = String(a.cognitionScore ?? "").match(/^(\d+)/); return m ? parseInt(m[1]) : 0; })();
+              const hLocoPts = a.locomotionStatus === "Normal" ? 1 : 0;
+              const hVitPts  = a.vitalityStatus   === "Normal" ? 2 : 0;
+              const hHearPts = a.hearingLeft       === "Normal" ? 1 : 0;
+              const hVisPts  = a.visionLeft        === "Normal" ? 1 : 0;
+              const hMoodPts = a.moodStatus        === "Normal" ? 1 : 0;
+              const hTotal   = hCogPts + hLocoPts + hVitPts + hHearPts + hVisPts + hMoodPts;
+              const hTotalColor = hTotal >= 8 ? "#10B981" : hTotal >= 5 ? "#F59E0B" : "#EF4444";
+              const hScoreRows = [
+                { label: "Cognition",  sub: "×3 words + ×1 orient.", pts: hCogPts,  max: 4, color: "#6366F1", icon: "bulb-outline"      },
+                { label: "Locomotion", sub: "Chair rise",             pts: hLocoPts, max: 1, color: "#F59E0B", icon: "walk-outline"      },
+                { label: "Vitality",   sub: "Weight + appetite",      pts: hVitPts,  max: 2, color: "#10B981", icon: "nutrition-outline"  },
+                { label: "Hearing",    sub: "Whisper test",           pts: hHearPts, max: 1, color: "#3B82F6", icon: "ear-outline"       },
+                { label: "Vision",     sub: "Letter E test",          pts: hVisPts,  max: 1, color: "#8B5CF6", icon: "eye-outline"       },
+                { label: "Mood",       sub: "Depressive screening",   pts: hMoodPts, max: 1, color: "#EC4899", icon: "happy-outline"     },
+              ];
+
               return (
                 <View key={a._id || i} style={styles.historyCard}>
                   {/* Header */}
@@ -813,17 +859,21 @@ const PatientAssessment = () => {
                       </View>
                       <View>
                         <Text style={styles.historyDateText}>{fmtDate(a.createdAt)}</Text>
-                        <Text style={styles.historySubText}>
-                          Assessment {history.length - i}
-                        </Text>
+                        <Text style={styles.historySubText}>Assessment {history.length - i}</Text>
                       </View>
                     </View>
-                    {a.referralNeeded && (
-                      <View style={styles.referralBadge}>
-                        <Ionicons name="arrow-forward-circle-outline" size={sc(13)} color="#DC2626" />
-                        <Text style={styles.referralBadgeText}>Referral</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: sc(8) }}>
+                      <View style={[styles.histScoreBadge, { backgroundColor: hTotalColor }]}>
+                        <Ionicons name="trophy-outline" size={sc(11)} color="#fff" />
+                        <Text style={styles.histScoreBadgeText}>{hTotal}/10</Text>
                       </View>
-                    )}
+                      {a.referralNeeded && (
+                        <View style={styles.referralBadge}>
+                          <Ionicons name="arrow-forward-circle-outline" size={sc(13)} color="#DC2626" />
+                          <Text style={styles.referralBadgeText}>Referral</Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
 
                   {/* Cognition */}
@@ -957,12 +1007,75 @@ const PatientAssessment = () => {
                       {a.referralNeeded && <DetailRow label="Referral Required" value="Yes" valueColor="#DC2626" />}
                     </View>
                   )}
+
+                  {/* Score Summary — identical layout to assessment page */}
+                  <View style={styles.histScoreSummaryBottom}>
+                    <View style={styles.scoreSummaryHeader}>
+                      <Ionicons name="trophy-outline" size={sc(22)} color="#0E7C61" />
+                      <Text style={styles.scoreSummaryTitle}>Assessment Score</Text>
+                      <View style={[styles.scoreTotalBadge, { backgroundColor: hTotalColor }]}>
+                        <Text style={styles.scoreTotalText}>{hTotal} / 10</Text>
+                      </View>
+                    </View>
+                    {hScoreRows.map((r) => (
+                      <View key={r.label} style={styles.scoreRow}>
+                        <View style={[styles.scoreRowIcon, { backgroundColor: r.color + "15" }]}>
+                          <Ionicons name={r.icon as any} size={sc(16)} color={r.color} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.scoreRowLabel}>{r.label}</Text>
+                          <Text style={styles.scoreRowSub}>{r.sub}</Text>
+                        </View>
+                        <View style={[styles.scoreRowBadge, { backgroundColor: r.color + "15" }]}>
+                          <Text style={[styles.scoreRowNum, { color: r.color }]}>{r.pts}/{r.max}</Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
                 </View>
               );
             })
           )}
         </View>
         </>
+        )}
+
+        {/* ─── Score Summary Card ──────────────────── */}
+        {!showHistoryOnly && _anyAssessed && (
+          <View style={styles.scoreSummaryCard}>
+            <View style={styles.scoreSummaryHeader}>
+              <Ionicons name="trophy-outline" size={sc(22)} color="#0E7C61" />
+              <Text style={styles.scoreSummaryTitle}>Assessment Score</Text>
+              <View style={[styles.scoreTotalBadge, {
+                backgroundColor: _totalScore >= 8 ? "#10B981" : _totalScore >= 5 ? "#F59E0B" : "#EF4444",
+              }]}>
+                <Text style={styles.scoreTotalText}>{_totalScore} / 10</Text>
+              </View>
+            </View>
+            {([
+              { label: "Cognition",  sub: "Word recall (×3) + Orientation (×1)",          pts: _cognitionAssessed ? _cognitionPts : null, max: 4, color: "#6366F1", icon: "bulb-outline"      },
+              { label: "Locomotion", sub: "Chair rise test (×1)",                          pts: _locomotionPts,                           max: 1, color: "#F59E0B", icon: "walk-outline"      },
+              { label: "Vitality",   sub: "No weight loss (×1) + No appetite loss (×1)",   pts: _vitalityPts,                             max: 2, color: "#10B981", icon: "nutrition-outline"  },
+              { label: "Hearing",    sub: "Whisper test pass (×1)",                        pts: _hearingPts,                              max: 1, color: "#3B82F6", icon: "ear-outline"       },
+              { label: "Vision",     sub: "Letter E test pass (×1)",                       pts: _visionPts,                               max: 1, color: "#8B5CF6", icon: "eye-outline"       },
+              { label: "Mood",       sub: "No depressive symptoms (×1)",                   pts: _moodPts,                                 max: 1, color: "#EC4899", icon: "happy-outline"     },
+            ] as const).map((r) => (
+              <View key={r.label} style={styles.scoreRow}>
+                <View style={[styles.scoreRowIcon, { backgroundColor: r.color + "15" }]}>
+                  <Ionicons name={r.icon as any} size={sc(16)} color={r.color} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.scoreRowLabel}>{r.label}</Text>
+                  <Text style={styles.scoreRowSub}>{r.sub}</Text>
+                </View>
+                <View style={[styles.scoreRowBadge, { backgroundColor: r.pts !== null ? r.color + "15" : "#f3f4f6" }]}>
+                  <Text style={[styles.scoreRowNum, { color: r.pts !== null ? r.color : "#aaa" }]}>
+                    {r.pts !== null ? `${r.pts}/${r.max}` : `—/${r.max}`}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
         )}
 
         {/* ─── Submit button ──────────────────────── */}
@@ -1138,6 +1251,40 @@ const styles = StyleSheet.create({
   detailLabel: { fontSize: sc(12), fontFamily: "Poppins-Regular", color: "#666", flex: 1 },
   detailValue: { fontSize: sc(13), fontFamily: "Poppins-SemiBold", textAlign: "right" },
   carePlanLabel: { fontSize: sc(12), fontFamily: "Poppins-SemiBold", color: "#0E7C61", marginBottom: sc(6) },
+
+  // Score summary card
+  scoreSummaryCard: { backgroundColor: "#fff", borderRadius: sc(16), padding: sc(16), marginTop: sc(8), marginBottom: sc(4), ...Platform.select({ ios: { shadowColor: "#000", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8 }, android: { elevation: 2 } }) },
+  scoreSummaryHeader: { flexDirection: "row", alignItems: "center", gap: sc(8), marginBottom: sc(12), paddingBottom: sc(12), borderBottomWidth: 1, borderBottomColor: "#f3f4f6" },
+  scoreSummaryTitle: { flex: 1, fontSize: sc(15), fontFamily: "Poppins-SemiBold", color: "#222" },
+  scoreTotalBadge: { paddingHorizontal: sc(12), paddingVertical: sc(5), borderRadius: sc(20) },
+  scoreTotalText: { fontSize: sc(14), fontFamily: "Poppins-Bold", color: "#fff" },
+  scoreRow: { flexDirection: "row", alignItems: "center", gap: sc(10), paddingVertical: sc(8), borderBottomWidth: 1, borderBottomColor: "#f9fafb" },
+  scoreRowIcon: { width: sc(32), height: sc(32), borderRadius: sc(8), justifyContent: "center", alignItems: "center" },
+  scoreRowLabel: { fontSize: sc(13), fontFamily: "Poppins-SemiBold", color: "#222" },
+  scoreRowSub: { fontSize: sc(11), fontFamily: "Poppins-Regular", color: "#888", marginTop: 1 },
+  scoreRowBadge: { paddingHorizontal: sc(10), paddingVertical: sc(4), borderRadius: sc(8), minWidth: sc(44), alignItems: "center" },
+  scoreRowNum: { fontSize: sc(13), fontFamily: "Poppins-Bold" },
+
+  // Score summary bottom section inside each history card
+  histScoreSummaryBottom: { borderTopWidth: 1, borderTopColor: "#f3f4f6", padding: sc(16), backgroundColor: "#fff" },
+
+  // History card score badge (header)
+  histScoreBadge: { flexDirection: "row", alignItems: "center", gap: sc(3), paddingHorizontal: sc(8), paddingVertical: sc(3), borderRadius: sc(10) },
+  histScoreBadgeText: { fontSize: sc(11), fontFamily: "Poppins-Bold", color: "#fff" },
+
+  // History card marking overview section
+  histScoreOverview: { backgroundColor: "#fafafa", borderTopWidth: 1, borderTopColor: "#f3f4f6", paddingHorizontal: sc(14), paddingVertical: sc(12) },
+  histScoreOverviewHeader: { flexDirection: "row", alignItems: "center", gap: sc(6), marginBottom: sc(10) },
+  histScoreOverviewTitle: { flex: 1, fontSize: sc(12), fontFamily: "Poppins-SemiBold", color: "#555" },
+  histScoreOverviewTotal: { paddingHorizontal: sc(10), paddingVertical: sc(3), borderRadius: sc(10) },
+  histScoreOverviewTotalText: { fontSize: sc(12), fontFamily: "Poppins-Bold" },
+  histScoreGrid: { gap: sc(6) },
+  histScoreGridItem: { flexDirection: "row", alignItems: "center", gap: sc(8) },
+  histScoreGridIcon: { width: sc(26), height: sc(26), borderRadius: sc(7), justifyContent: "center", alignItems: "center" },
+  histScoreGridLabel: { width: sc(72), fontSize: sc(12), fontFamily: "Poppins-SemiBold", color: "#333" },
+  histScoreGridSub: { flex: 1, fontSize: sc(10), fontFamily: "Poppins-Regular", color: "#999" },
+  histScoreGridBadge: { paddingHorizontal: sc(8), paddingVertical: sc(3), borderRadius: sc(8) },
+  histScoreGridNum: { fontSize: sc(12), fontFamily: "Poppins-Bold" },
 });
 
 export default PatientAssessment;

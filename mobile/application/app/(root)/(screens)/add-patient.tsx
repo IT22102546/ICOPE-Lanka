@@ -421,6 +421,7 @@ const AddPatient = () => {
                 {/* Dropdown list */}
                 {openDropdown === "staff" && (
                   <View style={styles.dropdown}>
+                    <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
                     {/* Super Admin — "Myself" as first option in list */}
                     {isSuperAdmin && currentUser && (
@@ -493,6 +494,7 @@ const AddPatient = () => {
                         </TouchableOpacity>
                       );
                     })}
+                    </ScrollView>
                   </View>
                 )}
               </>
@@ -640,6 +642,7 @@ const AddPatient = () => {
           </TouchableOpacity>
           {openDropdown === "gender" && (
             <View style={styles.dropdown}>
+              <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               {GENDERS.map((g) => (
                 <TouchableOpacity
                   key={g}
@@ -650,6 +653,7 @@ const AddPatient = () => {
                   {gender === g && <Ionicons name="checkmark-circle" size={sc(18)} color="#0E7C61" />}
                 </TouchableOpacity>
               ))}
+              </ScrollView>
             </View>
           )}
 
@@ -737,6 +741,7 @@ const AddPatient = () => {
           </TouchableOpacity>
           {openDropdown === "province" && (
             <View style={styles.dropdown}>
+              <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               {PROVINCES.map((p) => (
                 <TouchableOpacity
                   key={p}
@@ -747,6 +752,7 @@ const AddPatient = () => {
                   {province === p && <Ionicons name="checkmark-circle" size={sc(18)} color="#0E7C61" />}
                 </TouchableOpacity>
               ))}
+              </ScrollView>
             </View>
           )}
 
@@ -768,6 +774,7 @@ const AddPatient = () => {
           </TouchableOpacity>
           {openDropdown === "district" && availableDistricts.length > 0 && (
             <View style={styles.dropdown}>
+              <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               {availableDistricts.map((d) => (
                 <TouchableOpacity
                   key={d}
@@ -778,6 +785,7 @@ const AddPatient = () => {
                   {district === d && <Ionicons name="checkmark-circle" size={sc(18)} color="#0E7C61" />}
                 </TouchableOpacity>
               ))}
+              </ScrollView>
             </View>
           )}
 
