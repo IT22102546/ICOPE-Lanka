@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -15,6 +16,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import * as Speech from "expo-speech";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import useAuthStore from "@/stores/authStore";
 
@@ -68,8 +70,9 @@ const TXT: Record<string, { en: string; si: string }> = {
 
   // hearing
   hearingTest:    { en: "Whisper Test / Screening Audiometry / Digits-triplet-in-noise", si: "Whisper / ශ්‍රවණ පරීක්ෂණය" },
-  hearingInstr:   { en: "Stand behind the patient at arm's length. Whisper the number below. Ask what they heard.", si: "රෝගියාගේ පිටුපසින් අතේ දිගින් සිටින්න. පහත අංකය මෘදු ලෙස කියා ඔවුන්ට ඇසුණ දේ අසන්න." },
-  whisperNum:     { en: "Whisper this number:", si: "මෙම අංකය මෘදු ලෙස කියන්න:" },
+  hearingInstr:   { en: "Stand behind the patient at arm's length. Use the phone speaker to play the number below, then ask what they heard.", si: "රෝගියාගේ පිටුපසින් අතේ දිගින් සිටින්න. පහත අංකය දුරකථන ස්පීකරයෙන් වාදනය කර ඔවුන්ට ඇසුණ දේ අසන්න." },
+  whisperNum:     { en: "Whisper this 3-digit number:", si: "මෙම ඉලක්කම් 3 අංකය කියන්න:" },
+  playNumber:     { en: "Play number on phone", si: "අංකය දුරකථනයෙන් වාදනය කරන්න" },
   hearPass:       { en: "Pass", si: "සමත්" },
   hearFail:       { en: "Fail", si: "අසමත්" },
   hearingAid:     { en: "Uses Hearing Aid", si: "ශ්‍රවණ උපකරණ භාවිතා කරයි" },
@@ -112,10 +115,20 @@ const TXT: Record<string, { en: string; si: string }> = {
   back:            { en: "Back", si: "ආපසු" },
 };
 
-// ── Word sets for recall (bilingual) ─────────────────────────────
-const WORD_SETS = {
-  en: [["Ball", "Flag", "Tree"], ["Car", "River", "Book"], ["Chair", "Apple", "Bell"], ["Dog", "Sun", "Cup"]],
-  si: [["බෝලය", "කොඩිය", "ගස"], ["මෝටර් රථය", "ගඟ", "පොත"], ["පුටුව", "ඇපල්", "සීනුව"], ["බල්ලා", "ඉර", "කෝප්පය"]],
+// ── Word set for recall (fixed Sinhala trio) ─────────────────────
+const WORDS = ["දොඩම්", "මේසය", "රුපියල"];
+
+const DIGIT_WORDS: Record<string, string> = {
+  "0": "zero",
+  "1": "one",
+  "2": "two",
+  "3": "three",
+  "4": "four",
+  "5": "five",
+  "6": "six",
+  "7": "seven",
+  "8": "eight",
+  "9": "nine",
 };
 
 // ── Status labels (bilingual) ────────────────────────────────────
@@ -155,6 +168,7 @@ const DOMAIN_CONFIG: { key: DomainKey; icon: string; color: string }[] = [
   { key: "mood",       icon: "happy-outline",       color: "#EC4899" },
   { key: "carePlan",   icon: "clipboard-outline",   color: "#0E7C61" },
 ];
+const LOCOMOTION_IMAGE = require("../../../assets/images/locomotion.png");
 
 const PatientAssessment = () => {
   const router = useRouter();
@@ -184,7 +198,6 @@ const PatientAssessment = () => {
 
   // ── Interactive test state ─────────────────────────────────────
   // Cognition: word recall + orientation
-  const [wordSetIdx] = useState(() => Math.floor(Math.random() * WORD_SETS.en.length));
   const [wordsVisible, setWordsVisible] = useState(false);
   const [recallPhase, setRecallPhase] = useState(false);
   const [wordsRecalled, setWordsRecalled] = useState<number | null>(null);
@@ -204,8 +217,39 @@ const PatientAssessment = () => {
   const [appetiteLoss, setAppetiteLoss] = useState<boolean | null>(null);
 
   // Hearing: whisper test pass/fail
-  const [whisperNum] = useState(() => Math.floor(Math.random() * 90) + 10);
+  const [whisperNum] = useState(() => Math.floor(Math.random() * 900) + 100);
   const [hearingPass, setHearingPass] = useState<boolean | null>(null);
+  const whisperPlaybackRunning = useRef(false);
+
+  const speakDigit = useCallback((digit: string) => new Promise<void>((resolve) => {
+    Speech.speak(DIGIT_WORDS[digit] ?? digit, {
+      language: "en-US",
+      rate: 0.72,
+      pitch: 1,
+      volume: 1,
+      onDone: () => resolve(),
+      onStopped: () => resolve(),
+      onError: () => resolve(),
+    });
+  }), []);
+
+  const speakWhisperNumber = useCallback(async () => {
+    if (whisperPlaybackRunning.current) return;
+    whisperPlaybackRunning.current = true;
+    Speech.stop();
+    const digits = String(whisperNum).split("");
+
+    try {
+      for (let i = 0; i < digits.length; i += 1) {
+        await speakDigit(digits[i]);
+        if (i < digits.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      }
+    } finally {
+      whisperPlaybackRunning.current = false;
+    }
+  }, [speakDigit, whisperNum]);
 
   // Vision: letter E with angles
   const visionAngles = [0, 90, 270, 180];  // degrees: up, right, down, left
@@ -428,8 +472,8 @@ const PatientAssessment = () => {
     );
   };
 
-  // ── Word set for current language ──────────────────────────────
-  const words = WORD_SETS[lang][wordSetIdx];
+  // ── Word set for recall ────────────────────────────────────────
+  const words = WORDS;
 
   // ── Score summary (live, derived from interactive test state) ──
   const _cognitionAssessed = wordsRecalled !== null && orientationCorrect !== null;
@@ -574,6 +618,9 @@ const PatientAssessment = () => {
               <View style={styles.testBox}>
                 <Text style={styles.testTitle}>{t("chairRiseTest")}</Text>
                 <Text style={styles.testInstr}>{t("chairRiseInstr")}</Text>
+                <View style={styles.locomotionImageWrap}>
+                  <Image source={LOCOMOTION_IMAGE} style={styles.locomotionImage} resizeMode="contain" />
+                </View>
                 <View style={styles.timerDisplay}>
                   <Text style={styles.timerNumber}>{(timerMs / 1000).toFixed(1)}</Text>
                   <Text style={styles.timerUnit}>seconds</Text>
@@ -646,6 +693,10 @@ const PatientAssessment = () => {
                 <View style={styles.whisperDisplay}>
                   <Text style={styles.whisperLabel}>{t("whisperNum")}</Text>
                   <Text style={styles.whisperNumber}>{whisperNum}</Text>
+                  <TouchableOpacity style={styles.whisperSpeakBtn} onPress={speakWhisperNumber} activeOpacity={0.85}>
+                    <Ionicons name="volume-high" size={sc(18)} color="#fff" />
+                    <Text style={styles.whisperSpeakBtnText}>{t("playNumber")}</Text>
+                  </TouchableOpacity>
                 </View>
                 <RadioBtn label="Pass" sel={hearingPass === true} onPress={() => setHearingPass(true)} color="#10B981" />
                 <RadioBtn label="Fail" sel={hearingPass === false} onPress={() => setHearingPass(false)} color="#EF4444" />
@@ -1137,6 +1188,9 @@ const styles = StyleSheet.create({
   optBtnText: { fontSize: sc(14), fontFamily: "Poppins-Regular", color: "#555", flexShrink: 1, flexWrap: "wrap", lineHeight: sc(21) },
   btnRow: { flexDirection: "row", flexWrap: "wrap", gap: sc(8) },
 
+  locomotionImageWrap: { marginBottom: sc(14), alignItems: "center", justifyContent: "center", backgroundColor: "#fff", borderRadius: sc(14), padding: sc(10), borderWidth: 1, borderColor: "#E5E7EB" },
+  locomotionImage: { width: "100%", height: sc(160) },
+
   // Word recall
   wordRow: { flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: sc(10), marginTop: sc(12) },
   wordBadge: { backgroundColor: "#EEF2FF", borderRadius: sc(12), paddingHorizontal: sc(16), paddingVertical: sc(12), alignItems: "center", borderWidth: 1, borderColor: "#C7D2FE", minWidth: sc(80) },
@@ -1162,6 +1216,8 @@ const styles = StyleSheet.create({
   whisperDisplay: { alignItems: "center", marginVertical: sc(12), backgroundColor: "#EFF6FF", borderRadius: sc(16), paddingVertical: sc(16), paddingHorizontal: sc(20), borderWidth: 1, borderColor: "#BFDBFE" },
   whisperLabel: { fontSize: sc(13), fontFamily: "Poppins-Regular", color: "#2563EB", marginBottom: sc(4) },
   whisperNumber: { fontSize: sc(40), fontFamily: "Poppins-Bold", color: "#1E40AF" },
+  whisperSpeakBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sc(8), marginTop: sc(10), paddingVertical: sc(10), paddingHorizontal: sc(14), borderRadius: sc(999), backgroundColor: "#1D4ED8" },
+  whisperSpeakBtnText: { fontSize: sc(13), fontFamily: "Poppins-SemiBold", color: "#fff" },
 
   // Vision finger count
   fingerDisplay: { alignItems: "center", marginVertical: sc(16), backgroundColor: "#F5F3FF", borderRadius: sc(16), paddingVertical: sc(20), paddingHorizontal: sc(24), borderWidth: 1, borderColor: "#DDD6FE" },
