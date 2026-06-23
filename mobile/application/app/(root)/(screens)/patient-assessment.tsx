@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { Audio } from "expo-av";
 import * as Speech from "expo-speech";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import useAuthStore from "@/stores/authStore";
@@ -169,6 +170,7 @@ const DOMAIN_CONFIG: { key: DomainKey; icon: string; color: string }[] = [
   { key: "carePlan",   icon: "clipboard-outline",   color: "#0E7C61" },
 ];
 const LOCOMOTION_IMAGE = require("../../../assets/images/locomotion.png");
+const WHISPER_NOISE = require("../../../assets/audio/whisper-noise.wav");
 
 const PatientAssessment = () => {
   const router = useRouter();
@@ -220,11 +222,38 @@ const PatientAssessment = () => {
   const [whisperNum] = useState(() => Math.floor(Math.random() * 900) + 100);
   const [hearingPass, setHearingPass] = useState<boolean | null>(null);
   const whisperPlaybackRunning = useRef(false);
+  const whisperNoiseSound = useRef<Audio.Sound | null>(null);
+
+  const stopWhisperNoise = useCallback(async () => {
+    const sound = whisperNoiseSound.current;
+    whisperNoiseSound.current = null;
+    if (!sound) return;
+    try {
+      await sound.stopAsync();
+    } catch {
+      // ignore stop errors
+    }
+    try {
+      await sound.unloadAsync();
+    } catch {
+      // ignore unload errors
+    }
+  }, []);
+
+  const startWhisperNoise = useCallback(async () => {
+    await stopWhisperNoise();
+    const { sound } = await Audio.Sound.createAsync(
+      WHISPER_NOISE,
+      { shouldPlay: true, isLooping: true, volume: 0.18 }
+    );
+    whisperNoiseSound.current = sound;
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }, [stopWhisperNoise]);
 
   const speakDigit = useCallback((digit: string) => new Promise<void>((resolve) => {
     Speech.speak(DIGIT_WORDS[digit] ?? digit, {
       language: "en-US",
-      rate: 0.72,
+      rate: 0.6,
       pitch: 1,
       volume: 1,
       onDone: () => resolve(),
@@ -240,16 +269,25 @@ const PatientAssessment = () => {
     const digits = String(whisperNum).split("");
 
     try {
+      await startWhisperNoise();
       for (let i = 0; i < digits.length; i += 1) {
         await speakDigit(digits[i]);
         if (i < digits.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 700));
         }
       }
     } finally {
+      await stopWhisperNoise();
       whisperPlaybackRunning.current = false;
     }
-  }, [speakDigit, whisperNum]);
+  }, [speakDigit, startWhisperNoise, stopWhisperNoise, whisperNum]);
+
+  useEffect(() => {
+    return () => {
+      Speech.stop();
+      void stopWhisperNoise();
+    };
+  }, [stopWhisperNoise]);
 
   // Vision: letter E with angles
   const visionAngles = [0, 90, 270, 180];  // degrees: up, right, down, left
