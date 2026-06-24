@@ -73,6 +73,9 @@ const TXT: Record<string, { en: string; si: string }> = {
   hearingTest:    { en: "Whisper Test / Screening Audiometry / Digits-triplet-in-noise", si: "Whisper / ශ්‍රවණ පරීක්ෂණය" },
   hearingInstr:   { en: "Stand behind the patient at arm's length. Use the phone speaker to play the number below, then ask what they heard.", si: "රෝගියාගේ පිටුපසින් අතේ දිගින් සිටින්න. පහත අංකය දුරකථන ස්පීකරයෙන් වාදනය කර ඔවුන්ට ඇසුණ දේ අසන්න." },
   whisperNum:     { en: "Whisper this 3-digit number:", si: "මෙම ඉලක්කම් 3 අංකය කියන්න:" },
+  whisperVoice:   { en: "Voice language", si: "හඬ භාෂාව" },
+  voiceEnglish:   { en: "English", si: "ඉංග්‍රීසි" },
+  voiceSinhala:   { en: "Sinhala", si: "සිංහල" },
   playNumber:     { en: "Play number on phone", si: "අංකය දුරකථනයෙන් වාදනය කරන්න" },
   hearPass:       { en: "Pass", si: "සමත්" },
   hearFail:       { en: "Fail", si: "අසමත්" },
@@ -119,17 +122,31 @@ const TXT: Record<string, { en: string; si: string }> = {
 // ── Word set for recall (fixed Sinhala trio) ─────────────────────
 const WORDS = ["දොඩම්", "මේසය", "රුපියල"];
 
-const DIGIT_WORDS: Record<string, string> = {
-  "0": "zero",
-  "1": "one",
-  "2": "two",
-  "3": "three",
-  "4": "four",
-  "5": "five",
-  "6": "six",
-  "7": "seven",
-  "8": "eight",
-  "9": "nine",
+const DIGIT_WORDS: Record<"en" | "si", Record<string, string>> = {
+  en: {
+    "0": "zero",
+    "1": "one",
+    "2": "two",
+    "3": "three",
+    "4": "four",
+    "5": "five",
+    "6": "six",
+    "7": "seven",
+    "8": "eight",
+    "9": "nine",
+  },
+  si: {
+    "0": "බිංදුව",
+    "1": "එක",
+    "2": "දෙක",
+    "3": "තුන",
+    "4": "හතර",
+    "5": "පහ",
+    "6": "හය",
+    "7": "හත",
+    "8": "අට",
+    "9": "නවය",
+  },
 };
 
 // ── Status labels (bilingual) ────────────────────────────────────
@@ -220,9 +237,44 @@ const PatientAssessment = () => {
 
   // Hearing: whisper test pass/fail
   const [whisperNum] = useState(() => Math.floor(Math.random() * 900) + 100);
+  const [whisperVoiceLang, setWhisperVoiceLang] = useState<"en" | "si">("en");
   const [hearingPass, setHearingPass] = useState<boolean | null>(null);
+  const [whisperVoiceIds, setWhisperVoiceIds] = useState<{ en?: string; si?: string }>({});
   const whisperPlaybackRunning = useRef(false);
   const whisperNoiseSound = useRef<Audio.Sound | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadVoices = async () => {
+      try {
+        const voices = await Speech.getAvailableVoicesAsync();
+        if (!mounted || !voices?.length) return;
+
+        const isLang = (v: { language?: string }, code: string) =>
+          typeof v.language === "string" && v.language.toLowerCase().startsWith(code);
+
+        const pickVoice = (code: "en" | "si") => {
+          const exact = voices.find((v) => isLang(v, `${code}-`));
+          if (exact?.identifier) return exact.identifier;
+          const generic = voices.find((v) => isLang(v, code));
+          return generic?.identifier;
+        };
+
+        setWhisperVoiceIds({
+          en: pickVoice("en"),
+          si: pickVoice("si"),
+        });
+      } catch {
+        // If voice discovery fails, Speech.speak will still use system defaults.
+      }
+    };
+
+    void loadVoices();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const stopWhisperNoise = useCallback(async () => {
     const sound = whisperNoiseSound.current;
@@ -251,17 +303,18 @@ const PatientAssessment = () => {
   }, [stopWhisperNoise]);
 
   const speakDigit = useCallback((digit: string) => new Promise<void>((resolve) => {
-    Speech.speak(DIGIT_WORDS[digit] ?? digit, {
-      language: "en-US",
-      rate: 0.6,
-      pitch: 1,
+    Speech.speak(DIGIT_WORDS[whisperVoiceLang][digit] ?? digit, {
+      language: whisperVoiceLang === "si" ? "si-LK" : "en-US",
+      voice: whisperVoiceIds[whisperVoiceLang],
+      rate: whisperVoiceLang === "si" ? 0.5 : 0.6,
+      pitch: whisperVoiceLang === "si" ? 1.05 : 1,
       volume: 1,
       useApplicationAudioSession: false,
       onDone: () => resolve(),
       onStopped: () => resolve(),
       onError: () => resolve(),
     });
-  }), []);
+  }), [whisperVoiceIds, whisperVoiceLang]);
 
   const speakWhisperNumber = useCallback(async () => {
     if (whisperPlaybackRunning.current) return;
@@ -732,6 +785,23 @@ const PatientAssessment = () => {
                 <View style={styles.whisperDisplay}>
                   <Text style={styles.whisperLabel}>{t("whisperNum")}</Text>
                   <Text style={styles.whisperNumber}>{whisperNum}</Text>
+                  <Text style={styles.whisperVoiceLabel}>{t("whisperVoice")}</Text>
+                  <View style={styles.whisperVoiceRow}>
+                    <TouchableOpacity
+                      style={[styles.whisperVoiceBtn, whisperVoiceLang === "en" && styles.whisperVoiceBtnActive]}
+                      onPress={() => setWhisperVoiceLang("en")}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={[styles.whisperVoiceBtnText, whisperVoiceLang === "en" && styles.whisperVoiceBtnTextActive]}>{t("voiceEnglish")}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.whisperVoiceBtn, whisperVoiceLang === "si" && styles.whisperVoiceBtnActive]}
+                      onPress={() => setWhisperVoiceLang("si")}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={[styles.whisperVoiceBtnText, whisperVoiceLang === "si" && styles.whisperVoiceBtnTextActive]}>{t("voiceSinhala")}</Text>
+                    </TouchableOpacity>
+                  </View>
                   <TouchableOpacity style={styles.whisperSpeakBtn} onPress={speakWhisperNumber} activeOpacity={0.85}>
                     <Ionicons name="volume-high" size={sc(18)} color="#fff" />
                     <Text style={styles.whisperSpeakBtnText}>{t("playNumber")}</Text>
@@ -1255,6 +1325,12 @@ const styles = StyleSheet.create({
   whisperDisplay: { alignItems: "center", marginVertical: sc(12), backgroundColor: "#EFF6FF", borderRadius: sc(16), paddingVertical: sc(16), paddingHorizontal: sc(20), borderWidth: 1, borderColor: "#BFDBFE" },
   whisperLabel: { fontSize: sc(13), fontFamily: "Poppins-Regular", color: "#2563EB", marginBottom: sc(4) },
   whisperNumber: { fontSize: sc(40), fontFamily: "Poppins-Bold", color: "#1E40AF" },
+  whisperVoiceLabel: { marginTop: sc(8), fontSize: sc(12), fontFamily: "Poppins-Medium", color: "#475569" },
+  whisperVoiceRow: { flexDirection: "row", gap: sc(8), marginTop: sc(8) },
+  whisperVoiceBtn: { paddingVertical: sc(8), paddingHorizontal: sc(12), borderRadius: sc(999), borderWidth: 1, borderColor: "#93C5FD", backgroundColor: "#fff" },
+  whisperVoiceBtnActive: { backgroundColor: "#2563EB", borderColor: "#2563EB" },
+  whisperVoiceBtnText: { fontSize: sc(12), fontFamily: "Poppins-SemiBold", color: "#1D4ED8" },
+  whisperVoiceBtnTextActive: { color: "#fff" },
   whisperSpeakBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sc(8), marginTop: sc(10), paddingVertical: sc(10), paddingHorizontal: sc(14), borderRadius: sc(999), backgroundColor: "#1D4ED8" },
   whisperSpeakBtnText: { fontSize: sc(13), fontFamily: "Poppins-SemiBold", color: "#fff" },
 
