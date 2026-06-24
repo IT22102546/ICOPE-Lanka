@@ -244,7 +244,7 @@ const PatientAssessment = () => {
     await stopWhisperNoise();
     const { sound } = await Audio.Sound.createAsync(
       WHISPER_NOISE,
-      { shouldPlay: true, isLooping: true, volume: 0.18 }
+      { shouldPlay: true, isLooping: true, volume: 0.24 }
     );
     whisperNoiseSound.current = sound;
     await new Promise((resolve) => setTimeout(resolve, 250));
@@ -256,6 +256,7 @@ const PatientAssessment = () => {
       rate: 0.6,
       pitch: 1,
       volume: 1,
+      useApplicationAudioSession: false,
       onDone: () => resolve(),
       onStopped: () => resolve(),
       onError: () => resolve(),
