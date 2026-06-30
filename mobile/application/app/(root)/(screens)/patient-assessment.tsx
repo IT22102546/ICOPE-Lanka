@@ -912,7 +912,7 @@ const PatientAssessment = () => {
 
               <View style={styles.testBox}>
                 <Text style={styles.testTitle}>Visual Acuity Test – Letter E</Text>
-                <Text style={styles.testInstr}>WHO flow: Left eye (large+small), then Right eye (large+small). 8 responses per eye.</Text>
+                <Text style={styles.testInstr}>Left eye (large+small), then Right eye (large+small). 8 responses per eye.</Text>
 
                 {visionStepIdx < visionFlow.length ? (
                   <>
