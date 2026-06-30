@@ -177,6 +177,35 @@ const MOOD_STATUSES       = ["Not Assessed", "Normal", "Possible Depression", "D
 
 type DomainKey = "cognition" | "locomotion" | "vitality" | "hearing" | "vision" | "mood" | "carePlan";
 
+type VisionStepRecord = {
+  eye: "left" | "right";
+  size: "large" | "small";
+  angleIdx: number;
+  response: "yes" | "no";
+  correct: boolean;
+};
+
+const visionFlow: Array<{ eye: "left" | "right"; size: "large" | "small"; angleIdx: number }> = [
+  { eye: "left", size: "large", angleIdx: 0 },
+  { eye: "left", size: "large", angleIdx: 1 },
+  { eye: "left", size: "large", angleIdx: 2 },
+  { eye: "left", size: "large", angleIdx: 3 },
+  { eye: "left", size: "small", angleIdx: 0 },
+  { eye: "left", size: "small", angleIdx: 1 },
+  { eye: "left", size: "small", angleIdx: 2 },
+  { eye: "left", size: "small", angleIdx: 3 },
+  { eye: "right", size: "large", angleIdx: 0 },
+  { eye: "right", size: "large", angleIdx: 1 },
+  { eye: "right", size: "large", angleIdx: 2 },
+  { eye: "right", size: "large", angleIdx: 3 },
+  { eye: "right", size: "small", angleIdx: 0 },
+  { eye: "right", size: "small", angleIdx: 1 },
+  { eye: "right", size: "small", angleIdx: 2 },
+  { eye: "right", size: "small", angleIdx: 3 },
+];
+
+const VISION_AUDIT_PREFIX = "__VISION_AUDIT_JSON__:";
+
 const DOMAIN_CONFIG: { key: DomainKey; icon: string; color: string }[] = [
   { key: "cognition",  icon: "bulb-outline",       color: "#6366F1" },
   { key: "locomotion", icon: "walk-outline",        color: "#F59E0B" },
@@ -345,8 +374,9 @@ const PatientAssessment = () => {
 
   // Vision: letter E with angles
   const visionAngles = [0, 90, 270, 180];  // degrees: up, right, down, left
-  const [visionAngleIdx, setVisionAngleIdx] = useState(0);
-  const [visionResults, setVisionResults] = useState<boolean[]>([]);
+  const [visionStepIdx, setVisionStepIdx] = useState(0);
+  const [visionResults, setVisionResults] = useState<VisionStepRecord[]>([]);
+  const [visionEyeNotice, setVisionEyeNotice] = useState<"" | "left" | "right">("");
 
   // Mood: 2 questions
   const [moodQ1, setMoodQ1] = useState<boolean | null>(null);
@@ -412,12 +442,28 @@ const PatientAssessment = () => {
 
   // ── Auto-calc: vision ──────────────────────────────────────────
   useEffect(() => {
-    if (visionResults.length >= 4) {
-      const pass = visionResults.slice(0, 4).filter(Boolean).length >= 3;
-      updateForm("visionLeft", pass ? "Normal" : "Impairment");
-      updateForm("visionRight", pass ? "Normal" : "Impairment");
+    if (visionResults.length >= 16) {
+      const leftCorrect = visionResults.filter((v) => v.eye === "left" && v.correct).length;
+      const rightCorrect = visionResults.filter((v) => v.eye === "right" && v.correct).length;
+      updateForm("visionLeft", leftCorrect >= 6 ? "Normal" : "Impairment");
+      updateForm("visionRight", rightCorrect >= 6 ? "Normal" : "Impairment");
     }
   }, [visionResults]);
+
+  const recordVisionResponse = (response: "yes" | "no") => {
+    if (visionStepIdx >= visionFlow.length) return;
+    const step = visionFlow[visionStepIdx];
+    const correct = response !== "no";
+    const nextResults = [...visionResults, { ...step, response, correct }];
+    const nextIdx = visionStepIdx + 1;
+
+    setVisionResults(nextResults);
+    setVisionStepIdx(nextIdx);
+    if (nextIdx === 8) {
+      setVisionEyeNotice("right");
+      setTimeout(() => setVisionEyeNotice(""), 1200);
+    }
+  };
 
   // ── Auto-calc: mood ────────────────────────────────────────────
   useEffect(() => {
@@ -476,7 +522,22 @@ const PatientAssessment = () => {
       if (form.visionLeft !== "Not Assessed") body.visionLeft = form.visionLeft;
       if (form.visionRight !== "Not Assessed") body.visionRight = form.visionRight;
       body.glassesUsed = form.glassesUsed;
-      if (form.visionNotes) body.visionNotes = form.visionNotes;
+      {
+        const visionAuditPayload = visionResults.length > 0
+          ? `${VISION_AUDIT_PREFIX}${JSON.stringify(
+            visionResults.map((v) => ({
+              eye: v.eye,
+              size: v.size,
+              angle: visionAngles[v.angleIdx],
+              correct: v.correct,
+              response: v.response,
+            }))
+          )}`
+          : "";
+        const manualVisionNotes = String(form.visionNotes || "").trim();
+        const visionNotesCombined = [visionAuditPayload, manualVisionNotes].filter(Boolean).join("\n\n");
+        if (visionNotesCombined) body.visionNotes = visionNotesCombined;
+      }
       if (form.gdsScore) body.gdsScore = Number(form.gdsScore);
       if (form.moodStatus !== "Not Assessed") body.moodStatus = form.moodStatus;
       if (form.moodNotes) body.moodNotes = form.moodNotes;
@@ -503,7 +564,14 @@ const PatientAssessment = () => {
         + ((weightLoss !== null && appetiteLoss !== null)
           ? (weightLoss === false ? 1 : 0) + (appetiteLoss === false ? 1 : 0) : 0)
         + (hearingPass === true ? 1 : 0)
-        + (visionResults.length >= 4 ? (visionResults.filter(Boolean).length >= 3 ? 1 : 0) : 0)
+        + (visionResults.length >= 16
+          ? (
+            visionResults.filter((v) => v.eye === "left" && v.correct).length >= 6
+            && visionResults.filter((v) => v.eye === "right" && v.correct).length >= 6
+              ? 1
+              : 0
+          )
+          : 0)
         + ((moodQ1 !== null && moodQ2 !== null) ? (moodQ1 === false && moodQ2 === false ? 1 : 0) : 0);
       Alert.alert(t("brand"), `${t("success")}\n\nTotal Score: ${finalScore} / 10`, [
         { text: "OK", onPress: () => router.back() },
@@ -574,8 +642,14 @@ const PatientAssessment = () => {
   const _vitalityPts = (weightLoss !== null && appetiteLoss !== null)
     ? (weightLoss === false ? 1 : 0) + (appetiteLoss === false ? 1 : 0) : null;
   const _hearingPts = hearingPass === true ? 1 : hearingPass === false ? 0 : null;
-  const _visionPts = visionResults.length >= 4
-    ? (visionResults.filter(Boolean).length >= 3 ? 1 : 0) : null;
+  const _visionPts = visionResults.length >= 16
+    ? (
+      visionResults.filter((v) => v.eye === "left" && v.correct).length >= 6
+      && visionResults.filter((v) => v.eye === "right" && v.correct).length >= 6
+        ? 1
+        : 0
+    )
+    : null;
   const _moodPts = (moodQ1 !== null && moodQ2 !== null)
     ? (moodQ1 === false && moodQ2 === false ? 1 : 0) : null;
   const _totalScore = (_cognitionAssessed ? _cognitionPts : 0)
@@ -583,7 +657,7 @@ const PatientAssessment = () => {
     + (_hearingPts ?? 0) + (_visionPts ?? 0) + (_moodPts ?? 0);
   const _anyAssessed = _cognitionAssessed || form.locomotionStatus !== "Not Assessed"
     || weightLoss !== null || appetiteLoss !== null
-    || hearingPass !== null || visionResults.length >= 4
+    || hearingPass !== null || visionResults.length >= 16
     || moodQ1 !== null || moodQ2 !== null;
 
   return (
@@ -828,56 +902,96 @@ const PatientAssessment = () => {
           <DomainHeader domain={DOMAIN_CONFIG[4]} />
           {expanded === "vision" && (
             <View style={styles.domainBody}>
+              {visionEyeNotice && (
+                <View style={{ backgroundColor: "#DBEAFE", borderColor: "#93C5FD", borderWidth: 1, borderRadius: sc(10), paddingVertical: sc(10), paddingHorizontal: sc(12), marginBottom: sc(10) }}>
+                  <Text style={{ color: "#1D4ED8", fontFamily: "Poppins-SemiBold", fontSize: sc(13) }}>
+                    {visionEyeNotice === "right" ? "Switch to RIGHT eye now" : "Switch to LEFT eye"}
+                  </Text>
+                </View>
+              )}
+
               <View style={styles.testBox}>
                 <Text style={styles.testTitle}>Visual Acuity Test – Letter E</Text>
-                <Text style={styles.testInstr}>Can the patient see the letter E in the correct orientation? Test both eyes together.</Text>
+                <Text style={styles.testInstr}>WHO flow: Left eye (large+small), then Right eye (large+small). 8 responses per eye.</Text>
 
-                {/* Letter E with rotation */}
-                <View style={styles.letterDisplay}>
-                  <Text style={[styles.letterText, { transform: [{ rotate: `${visionAngles[visionAngleIdx]}deg` }] }]}>E</Text>
-                  <Text style={styles.letterCounter}>{visionAngleIdx + 1}/4</Text>
-                </View>
-
-                {/* Can you see this orientation? */}
-                {visionResults.length < 4 ? (
+                {visionStepIdx < visionFlow.length ? (
                   <>
-                    <Text style={styles.fieldLabel}>Can you see the letter E in this direction?</Text>
+                    <View style={styles.letterDisplay}>
+                      <Text style={[styles.letterText, { fontSize: visionFlow[visionStepIdx].size === "large" ? sc(96) : sc(64), transform: [{ rotate: `${visionAngles[visionFlow[visionStepIdx].angleIdx]}deg` }] }]}>E</Text>
+                      <Text style={styles.letterCounter}>{visionStepIdx + 1}/16</Text>
+                    </View>
+                    <Text style={styles.fieldLabel}>
+                      {visionFlow[visionStepIdx].eye === "left" ? "LEFT" : "RIGHT"} eye • {visionFlow[visionStepIdx].size === "large" ? "Large E" : "Small E"} • Step {(visionStepIdx % 4) + 1}/4
+                    </Text>
                     <View style={styles.row}>
                       <TouchableOpacity
                         style={[styles.yesNoBtn, { backgroundColor: "#10B98120", borderColor: "#10B981" }]}
-                        onPress={() => { setVisionResults([...visionResults, true]); if (visionAngleIdx < 3) setVisionAngleIdx(visionAngleIdx + 1); }}
+                        onPress={() => recordVisionResponse("yes")}
                       >
                         <Text style={{ color: "#10B981", fontFamily: "Poppins-SemiBold", fontSize: sc(16) }}>Yes</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.yesNoBtn, { backgroundColor: "#EF444420", borderColor: "#EF4444" }]}
-                        onPress={() => { setVisionResults([...visionResults, false]); if (visionAngleIdx < 3) setVisionAngleIdx(visionAngleIdx + 1); }}
+                        onPress={() => recordVisionResponse("no")}
                       >
                         <Text style={{ color: "#EF4444", fontFamily: "Poppins-SemiBold", fontSize: sc(16) }}>No</Text>
                       </TouchableOpacity>
                     </View>
-                    <Text style={[styles.fieldLabel, { marginTop: sc(8) }]}>{visionResults.length}/4 orientations tested</Text>
+                    <Text style={[styles.fieldLabel, { marginTop: sc(8) }]}>{visionResults.length}/16 orientations tested</Text>
                   </>
                 ) : (
                   <>
-                    <Text style={[styles.scoreText, { marginTop: sc(8), color: visionResults.filter(Boolean).length >= 3 ? "#10B981" : "#EF4444" }]}>
-                      {visionResults.filter(Boolean).length >= 3 ? "✓ Pass – 3 or more correct" : "✗ Fail – fewer than 3 correct"} ({visionResults.filter(Boolean).length}/4)
-                    </Text>
-                    <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#6B7280", marginTop: sc(8) }]} onPress={() => { setVisionResults([]); setVisionAngleIdx(0); }}>
+                    {(() => {
+                      const leftCorrect = visionResults.filter((v) => v.eye === "left" && v.correct).length;
+                      const rightCorrect = visionResults.filter((v) => v.eye === "right" && v.correct).length;
+                      const leftPass = leftCorrect >= 6;
+                      const rightPass = rightCorrect >= 6;
+                      return (
+                        <View>
+                          <Text style={[styles.scoreText, { marginTop: sc(8), color: leftPass && rightPass ? "#10B981" : "#EF4444" }]}>Vision Result Sheet</Text>
+                          <Text style={{ color: leftPass ? "#10B981" : "#EF4444", fontFamily: "Poppins-SemiBold", marginTop: sc(8) }}>Left Eye: {leftCorrect}/8 • {leftPass ? "Normal" : "Impairment"}</Text>
+                          <Text style={{ color: rightPass ? "#10B981" : "#EF4444", fontFamily: "Poppins-SemiBold", marginTop: sc(4) }}>Right Eye: {rightCorrect}/8 • {rightPass ? "Normal" : "Impairment"}</Text>
+                        </View>
+                      );
+                    })()}
+                    <Text style={[styles.fieldLabel, { marginTop: sc(8) }]}>Auto-marking complete (Yes = Correct, No = Wrong)</Text>
+                    <TouchableOpacity style={[styles.actionBtn, { backgroundColor: "#6B7280", marginTop: sc(8) }]} onPress={() => { setVisionResults([]); setVisionStepIdx(0); setVisionEyeNotice(""); updateForm("visionLeft", "Not Assessed"); updateForm("visionRight", "Not Assessed"); }}>
                       <Ionicons name="refresh" size={sc(18)} color="#fff" />
-                      <Text style={styles.actionBtnText}>Reset Test</Text>
+                      <Text style={styles.actionBtnText}>Reset Vision Test</Text>
                     </TouchableOpacity>
                   </>
                 )}
               </View>
+
+              {visionResults.length > 0 && (
+                <View style={styles.angleResultCard}>
+                  <Text style={styles.angleResultHeader}>Angle Results</Text>
+                  {visionResults.map((v, idx) => (
+                    <View key={`live-angle-${idx}`} style={styles.angleResultRow}>
+                      <Text style={styles.angleResultLabel}>{`${idx + 1}. ${v.eye.toUpperCase()} ${v.size} ${visionAngles[v.angleIdx]}deg`}</Text>
+                      <Text style={[styles.angleResultValue, { color: v.correct ? "#10B981" : "#EF4444" }]}>{v.correct ? "Correct" : "Wrong"}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {visionResults.length >= 16 && (
+                <View style={[styles.scoreBadge, { backgroundColor: "#faf5ff", borderColor: "#e9d5ff" }]}>
+                  <Ionicons name="document-text-outline" size={sc(18)} color="#7C3AED" />
+                  <Text style={[styles.scoreText, { color: "#7C3AED" }]}>Result sheet saved in Vision section</Text>
+                </View>
+              )}
 
               <View style={styles.switchRow}>
                 <Text style={styles.switchLabel}>Uses Glasses/Spectacles</Text>
                 <Switch value={form.glassesUsed} onValueChange={(v) => updateForm("glassesUsed", v)} trackColor={{ true: "#0E7C61" }} />
               </View>
               <Text style={styles.fieldLabel}>{t("status")}</Text>
-              <RadioBtn label="Pass – Normal" sel={form.visionLeft === "Normal"} onPress={() => { updateForm("visionLeft", "Normal"); updateForm("visionRight", "Normal"); }} color="#10B981" />
-              <RadioBtn label="Fail – Impairment" sel={form.visionLeft === "Impairment"} onPress={() => { updateForm("visionLeft", "Impairment"); updateForm("visionRight", "Impairment"); }} color="#EF4444" />
+              <Text style={[styles.scoreText, { color: form.visionLeft === "Normal" && form.visionRight === "Normal" ? "#10B981" : "#EF4444" }]}> 
+                {form.visionLeft === "Not Assessed" || form.visionRight === "Not Assessed"
+                  ? "Not Assessed"
+                  : `Left: ${form.visionLeft} | Right: ${form.visionRight}`}
+              </Text>
               <Text style={styles.fieldLabel}>{t("notes")}</Text>
               <TextInput style={[styles.input, styles.multiline]} multiline value={form.visionNotes} onChangeText={(v) => updateForm("visionNotes", v)} placeholderTextColor="#bbb" />
             </View>
@@ -981,7 +1095,7 @@ const PatientAssessment = () => {
                 s.includes("Fail") ? "#EF4444" :
                 s.includes("Normal") ? "#10B981" :
                 s.includes("Mild") || s.includes("At Risk") || s.includes("Possible") ? "#F59E0B" :
-                s.includes("Severe") || s.includes("Depression") || s.includes("Malnourished") ? "#EF4444" :
+                s.includes("Severe") || s.includes("Depression") || s.includes("Malnourished") || s.includes("Impairment") || s.includes("Loss") || s.includes("Limitation") ? "#EF4444" :
                 "#6B7280";
 
               const DetailRow = ({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) => (
@@ -996,7 +1110,7 @@ const PatientAssessment = () => {
               const hLocoPts = a.locomotionStatus === "Normal" ? 1 : 0;
               const hVitPts  = a.vitalityStatus   === "Normal" ? 2 : 0;
               const hHearPts = a.hearingLeft       === "Normal" ? 1 : 0;
-              const hVisPts  = a.visionLeft        === "Normal" ? 1 : 0;
+              const hVisPts  = a.visionLeft        === "Normal" && a.visionRight === "Normal" ? 1 : 0;
               const hMoodPts = a.moodStatus        === "Normal" ? 1 : 0;
               const hTotal   = hCogPts + hLocoPts + hVitPts + hHearPts + hVisPts + hMoodPts;
               const hTotalColor = hTotal >= 8 ? "#10B981" : hTotal >= 5 ? "#F59E0B" : "#EF4444";
@@ -1005,9 +1119,66 @@ const PatientAssessment = () => {
                 { label: "Locomotion", sub: "Chair rise",             pts: hLocoPts, max: 1, color: "#F59E0B", icon: "walk-outline"      },
                 { label: "Vitality",   sub: "Weight + appetite",      pts: hVitPts,  max: 2, color: "#10B981", icon: "nutrition-outline"  },
                 { label: "Hearing",    sub: "Whisper test",           pts: hHearPts, max: 1, color: "#3B82F6", icon: "ear-outline"       },
-                { label: "Vision",     sub: "Letter E test",          pts: hVisPts,  max: 1, color: "#8B5CF6", icon: "eye-outline"       },
+                { label: "Vision",     sub: "WHO left/right eye test", pts: hVisPts,  max: 1, color: "#8B5CF6", icon: "eye-outline"       },
                 { label: "Mood",       sub: "Depressive screening",   pts: hMoodPts, max: 1, color: "#EC4899", icon: "happy-outline"     },
               ];
+              const visionCombinedStatus =
+                a.visionLeft === "Impairment" || a.visionRight === "Impairment"
+                  ? "Impairment"
+                  : a.visionLeft || a.visionRight || "Not Assessed";
+              const { cleanVisionNotes, historyVisionAngles } = (() => {
+                const raw = String(a.visionNotes || "").trim();
+                const empty = { cleanVisionNotes: "", historyVisionAngles: [] as Array<{ eye: "left" | "right"; size: "large" | "small"; angle: number; correct: boolean }> };
+                if (!raw) return empty;
+
+                const [firstBlock, ...restBlocks] = raw.split(/\n\n+/);
+
+                if (firstBlock.startsWith(VISION_AUDIT_PREFIX)) {
+                  try {
+                    const parsed = JSON.parse(firstBlock.slice(VISION_AUDIT_PREFIX.length));
+                    const historyVisionAngles = Array.isArray(parsed)
+                      ? parsed.filter((item: any) =>
+                          item &&
+                          (item.eye === "left" || item.eye === "right") &&
+                          (item.size === "large" || item.size === "small") &&
+                          Number.isFinite(Number(item.angle)) &&
+                          typeof item.correct === "boolean"
+                        ).map((item: any) => ({
+                          eye: item.eye,
+                          size: item.size,
+                          angle: Number(item.angle),
+                          correct: item.correct,
+                        }))
+                      : [];
+                    return {
+                      cleanVisionNotes: restBlocks.join("\n\n").trim(),
+                      historyVisionAngles,
+                    };
+                  } catch {
+                    return { cleanVisionNotes: restBlocks.join("\n\n").trim(), historyVisionAngles: [] as Array<{ eye: "left" | "right"; size: "large" | "small"; angle: number; correct: boolean }> };
+                  }
+                }
+
+                const looksLikeAutoAudit = /^1\.\s+(LEFT|RIGHT)\s+(large|small)\s+\d+deg\s+-\s+(Yes|No|Average)\s+=>\s+(Correct|Wrong)/m.test(firstBlock);
+                if (looksLikeAutoAudit) {
+                  const historyVisionAngles = firstBlock
+                    .split("\n")
+                    .map((line) => {
+                      const m = line.match(/^\d+\.\s+(LEFT|RIGHT)\s+(large|small)\s+(\d+)deg\s+-\s+(Yes|No|Average)\s+=>\s+(Correct|Wrong)/i);
+                      if (!m) return null;
+                      return {
+                        eye: m[1].toLowerCase() as "left" | "right",
+                        size: m[2].toLowerCase() as "large" | "small",
+                        angle: Number(m[3]),
+                        correct: m[5].toLowerCase() === "correct",
+                      };
+                    })
+                    .filter(Boolean) as Array<{ eye: "left" | "right"; size: "large" | "small"; angle: number; correct: boolean }>;
+                  return { cleanVisionNotes: restBlocks.join("\n\n").trim(), historyVisionAngles };
+                }
+
+                return { cleanVisionNotes: raw, historyVisionAngles: [] as Array<{ eye: "left" | "right"; size: "large" | "small"; angle: number; correct: boolean }> };
+              })();
 
               return (
                 <View key={a._id || i} style={styles.historyCard}>
@@ -1111,14 +1282,25 @@ const PatientAssessment = () => {
                       <View style={styles.sectionHeader}>
                         <Ionicons name="eye-outline" size={sc(18)} color="#8B5CF6" />
                         <Text style={styles.sectionTitle}>{t("vision")}</Text>
-                        <View style={[styles.statusBadge, { backgroundColor: statusColor(a.visionLeft || a.visionRight) + "20" }]}>
-                          <Text style={[styles.statusBadgeText, { color: statusColor(a.visionLeft || a.visionRight) }]}>{sl(a.visionLeft)}</Text>
+                        <View style={[styles.statusBadge, { backgroundColor: statusColor(visionCombinedStatus) + "20" }]}> 
+                          <Text style={[styles.statusBadgeText, { color: statusColor(visionCombinedStatus) }]}>{sl(visionCombinedStatus)}</Text>
                         </View>
                       </View>
                       {a.visionLeft && <DetailRow label="Left Eye" value={sl(a.visionLeft)} valueColor={statusColor(a.visionLeft)} />}
                       {a.visionRight && <DetailRow label="Right Eye" value={sl(a.visionRight)} valueColor={statusColor(a.visionRight)} />}
                       {a.glassesUsed && <DetailRow label="Glasses Used" value="Yes" valueColor="#0E7C61" />}
-                      {a.visionNotes && <DetailRow label="Notes" value={a.visionNotes} />}
+                      {historyVisionAngles.length > 0 && (
+                        <View style={styles.angleResultCard}>
+                          <Text style={styles.angleResultHeader}>Angle Results</Text>
+                          {historyVisionAngles.map((v, idx) => (
+                            <View key={`hist-angle-${a._id || i}-${idx}`} style={styles.angleResultRow}>
+                              <Text style={styles.angleResultLabel}>{`${idx + 1}. ${v.eye.toUpperCase()} ${v.size} ${v.angle}deg`}</Text>
+                              <Text style={[styles.angleResultValue, { color: v.correct ? "#10B981" : "#EF4444" }]}>{v.correct ? "Correct" : "Wrong"}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                      {cleanVisionNotes && <DetailRow label="Notes" value={cleanVisionNotes} />}
                     </View>
                   )}
 
@@ -1217,7 +1399,7 @@ const PatientAssessment = () => {
               { label: "Locomotion", sub: "Chair rise test (×1)",                          pts: _locomotionPts,                           max: 1, color: "#F59E0B", icon: "walk-outline"      },
               { label: "Vitality",   sub: "No weight loss (×1) + No appetite loss (×1)",   pts: _vitalityPts,                             max: 2, color: "#10B981", icon: "nutrition-outline"  },
               { label: "Hearing",    sub: "Whisper test pass (×1)",                        pts: _hearingPts,                              max: 1, color: "#3B82F6", icon: "ear-outline"       },
-              { label: "Vision",     sub: "Letter E test pass (×1)",                       pts: _visionPts,                               max: 1, color: "#8B5CF6", icon: "eye-outline"       },
+              { label: "Vision",     sub: "WHO left/right eye pass (×1)",                  pts: _visionPts,                               max: 1, color: "#8B5CF6", icon: "eye-outline"       },
               { label: "Mood",       sub: "No depressive symptoms (×1)",                   pts: _moodPts,                                 max: 1, color: "#EC4899", icon: "happy-outline"     },
             ] as const).map((r) => (
               <View key={r.label} style={styles.scoreRow}>
@@ -1349,6 +1531,11 @@ const styles = StyleSheet.create({
   // Score badge
   scoreBadge: { flexDirection: "row", alignItems: "center", gap: sc(8), marginTop: sc(12), backgroundColor: "#F0FDF4", borderRadius: sc(10), padding: sc(12), borderWidth: 1, borderColor: "#BBF7D0" },
   scoreText: { fontSize: sc(15), fontFamily: "Poppins-SemiBold", color: "#15803D" },
+  angleResultCard: { marginTop: sc(12), backgroundColor: "#F8FAFC", borderRadius: sc(10), borderWidth: 1, borderColor: "#E5E7EB", padding: sc(10) },
+  angleResultHeader: { fontSize: sc(12), fontFamily: "Poppins-SemiBold", color: "#374151", marginBottom: sc(6) },
+  angleResultRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: sc(8), paddingVertical: sc(4) },
+  angleResultLabel: { flex: 1, fontSize: sc(11), fontFamily: "Poppins-Regular", color: "#6B7280" },
+  angleResultValue: { fontSize: sc(11), fontFamily: "Poppins-SemiBold" },
 
   // History
   historySection: { marginTop: sc(8), marginBottom: sc(16) },
