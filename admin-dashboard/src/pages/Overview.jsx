@@ -40,7 +40,7 @@ export default function OverviewPage({ token, onNavigate }) {
 
   const s = data?.stats || {};
   const statCards = [
-    { label: "Physiotherapists", value: s.physiotherapists ?? 0, color: "blue",   icon: "Users",    nav: "physiotherapists", desc: "Clinical staff accounts" },
+    { label: "Health Care Professionals", value: s.physiotherapists ?? 0, color: "blue",   icon: "Users",    nav: "physiotherapists", desc: "Clinical staff accounts" },
     { label: "Total Patients",   value: s.patients ?? 0,         color: "teal",   icon: "Person",   nav: "patients",         desc: "Registered elder patients" },
     { label: "Assessments Done", value: s.assessments ?? 0,      color: "violet", icon: "Activity", nav: "assessments",      desc: "ICOPE domain evaluations" },
   ];
@@ -87,7 +87,7 @@ export default function OverviewPage({ token, onNavigate }) {
           <div className="panelHead">
             <div className="panelHeadLeft">
               <span className="panelAccent pa-blue" />
-              <h3>Recent Physiotherapists</h3>
+              <h3>Recent Health Care Professionals</h3>
             </div>
             <button className="btn btn-ghost btn-xs" onClick={() => onNavigate("physiotherapists")}>
               {ic("ArrowRight", 13)} View all
@@ -106,9 +106,9 @@ export default function OverviewPage({ token, onNavigate }) {
           {!data?.physiotherapists?.length && (
             <div className="emptyState">
               <div className="emptyIcon">{ic("Users", 28)}</div>
-              <p>No physiotherapists registered yet</p>
+              <p>No health care professionals registered yet</p>
               <button className="btn btn-primary btn-sm" style={{ marginTop: 10 }} onClick={() => onNavigate("physiotherapists")}>
-                {ic("Plus", 13)} Add First Physiotherapist
+                {ic("Plus", 13)} Add First Health Care Professional
               </button>
             </div>
           )}

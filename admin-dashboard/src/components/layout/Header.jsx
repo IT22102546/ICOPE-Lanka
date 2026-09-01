@@ -4,7 +4,7 @@ import { initials } from "@/lib/utils";
 
 const PAGE_TITLE = {
   overview:         "Overview",
-  physiotherapists: "Physiotherapists",
+  physiotherapists: "Health Care Professionals",
   patients:         "All Patients",
   assessments:      "Assessments",
   "my-patients":    "My Patients",
@@ -12,8 +12,8 @@ const PAGE_TITLE = {
 };
 const PAGE_SUB = {
   overview:         "Live platform summary & key metrics",
-  physiotherapists: "Manage and monitor clinical staff accounts",
-  patients:         "Complete elder patient registry across all physiotherapists",
+  physiotherapists: "Manage and monitor health care professional accounts",
+  patients:         "Complete elder patient registry across all health care professionals",
   assessments:      "All ICOPE domain assessment records",
   "my-patients":    "Patients directly assigned to you",
   "my-assessments": "Assessment records for your patients",
@@ -49,7 +49,7 @@ function LiveClock() {
 export default function Header({ activeView, user, theme, toggleTheme, onToggleSidebar }) {
   const title    = PAGE_TITLE[activeView] || "Dashboard";
   const sub      = PAGE_SUB[activeView]   || "";
-  const roleLabel = user?.role === "PHYSIOTHERAPIST" ? "Physiotherapist" : "Super Admin";
+  const roleLabel = user?.role === "PHYSIOTHERAPIST" ? "Health Care Professional" : "Super Admin";
 
   return (
     <header className="dashHeader">

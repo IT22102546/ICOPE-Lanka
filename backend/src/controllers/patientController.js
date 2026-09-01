@@ -149,7 +149,9 @@ const listPatientAssessments = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    const assessments = await Assessment.find({ patientId: req.params.id }).sort({ createdAt: -1 });
+    const assessments = await Assessment.find({ patientId: req.params.id })
+      .populate("doctorId", "name email")
+      .sort({ createdAt: -1 });
     return res.json({ assessments });
   } catch (err) {
     return res.status(500).json({ message: err.message });

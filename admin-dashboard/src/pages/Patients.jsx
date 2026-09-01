@@ -46,7 +46,7 @@ function PatientDetailModal({ patient, token, onClose }) {
     ["District",          patient.district || "—"],
     ["Emergency Contact", patient.emergencyContact || "—"],
     ["Registered",        fmtDate(patient.createdAt)],
-    ["Assigned Physio",   patient.doctorId?.name   || "—"],
+    ["Assigned Health Care Professional", patient.doctorId?.name   || "—"],
   ];
 
   return (
@@ -95,7 +95,7 @@ function AddPatientModal({ token, isAdmin, physios, user, onClose, onCreated }) 
     if (!form.phone.trim())    { setError("Phone number is required"); return; }
     if (!form.province)        { setError("Province is required"); return; }
     if (!form.district)        { setError("District is required"); return; }
-    if (isAdmin && !form.doctorId) { setError("Please assign this patient to a physiotherapist"); return; }
+    if (isAdmin && !form.doctorId) { setError("Please assign this patient to a health care professional"); return; }
     setSaving(true);
     try {
       const body = { ...form };
@@ -150,9 +150,9 @@ function AddPatientModal({ token, isAdmin, physios, user, onClose, onCreated }) 
           </select>
         </Field>
         {isAdmin && (
-          <Field label="Assign Physiotherapist *">
+          <Field label="Assign Health Care Professional *">
             <select value={form.doctorId} onChange={set("doctorId")}>
-              <option value="">— Select a physiotherapist —</option>
+              <option value="">— Select a health care professional —</option>
               {user && <option value={user.id}>{user.name} (Myself)</option>}
               {physios.map((ph) => <option key={ph._id} value={ph._id}>{ph.name}</option>)}
             </select>
@@ -206,7 +206,7 @@ function EditPatientModal({ patient, token, isAdmin, physios, user, onClose, onS
     setError("");
     if (!form.fullName.trim()) { setError("Full name is required"); return; }
     if (!form.phone.trim())    { setError("Phone is required"); return; }
-    if (isAdmin && !form.doctorId) { setError("Please assign this patient to a physiotherapist"); return; }
+    if (isAdmin && !form.doctorId) { setError("Please assign this patient to a health care professional"); return; }
     setSaving(true);
     try {
       const body = { ...form };
@@ -258,9 +258,9 @@ function EditPatientModal({ patient, token, isAdmin, physios, user, onClose, onS
           </select>
         </Field>
         {isAdmin && (
-          <Field label="Assign Physiotherapist *">
+          <Field label="Assign Health Care Professional *">
             <select value={form.doctorId} onChange={set("doctorId")}>
-              <option value="">— Select a physiotherapist —</option>
+              <option value="">— Select a health care professional —</option>
               {user && <option value={user.id}>{user.name} (Myself)</option>}
               {physios.map((ph) => <option key={ph._id} value={ph._id}>{ph.name}</option>)}
             </select>
@@ -292,7 +292,7 @@ function EditPatientModal({ patient, token, isAdmin, physios, user, onClose, onS
 /* ── Main patients page ───────────────────────────────────────── */
 export default function PatientsPage({ token, user, myOnly = false }) {
   const isAdmin     = user?.role === "SUPER_ADMIN";
-  // showAdminCols: show physio column + physio assign dropdown only when viewing ALL patients as admin
+  // showAdminCols: show clinician column + assign dropdown only when viewing ALL patients as admin
   const showAdminCols = isAdmin && !myOnly;
 
   const [patients,  setPatients]  = useState([]);
@@ -378,7 +378,7 @@ export default function PatientsPage({ token, user, myOnly = false }) {
               {myOnly
                 ? "Patients directly assigned to you"
                 : isAdmin
-                ? "Complete elder patient registry across all physiotherapists"
+                ? "Complete elder patient registry across all health care professionals"
                 : "Your assigned patient roster"}
             </p>
           </div>
@@ -397,7 +397,7 @@ export default function PatientsPage({ token, user, myOnly = false }) {
           <div className="searchBox">
             {ic("Search", 14)}
             <input
-              placeholder={isAdmin ? "Search patient, phone, province, physio..." : "Search your patients..."}
+              placeholder={isAdmin ? "Search patient, phone, province, health care professional..." : "Search your patients..."}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -417,7 +417,7 @@ export default function PatientsPage({ token, user, myOnly = false }) {
                   <th>Age / Gender</th>
                   <th>Phone</th>
                   <th>Province / District</th>
-                  {showAdminCols && <th>Assigned Physio</th>}
+                  {showAdminCols && <th>Assigned Health Care Professional</th>}
                   <th>Registered</th>
                   <th></th>
                 </tr>

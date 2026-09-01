@@ -71,7 +71,7 @@ export default function PhysiosPage({ token }) {
           password: form.password,
         }),
       });
-      setInfo(`Physiotherapist account created for ${form.name.trim()}`);
+      setInfo(`Health care professional account created for ${form.name.trim()}`);
       setShowForm(false);
       load();
     } catch (e) {
@@ -86,7 +86,7 @@ export default function PhysiosPage({ token }) {
     setDeleting(id);
     try {
       await apiFetch(`/api/physiotherapists/${id}`, token, { method: "DELETE" });
-      setInfo("Physiotherapist deleted");
+      setInfo("Health care professional deleted");
       setPhysios((prev) => prev.filter((p) => p._id !== id));
     } catch (e) {
       setError(e.message);
@@ -139,14 +139,14 @@ export default function PhysiosPage({ token }) {
         <div className="pageHeroLeft">
           <div className="pageHeroIcon hi-blue">{ic("Users", 22)}</div>
           <div>
-            <h2 className="pageHeroTitle">Physiotherapists</h2>
+            <h2 className="pageHeroTitle">Health Care Professionals</h2>
             <p className="pageHeroSub">Manage clinical staff accounts and their patient assignments</p>
           </div>
         </div>
         <div className="pageHeroActions">
           <button className="btn btn-ghost btn-sm" onClick={load}>{ic("Refresh", 15)}</button>
           <button className="btn btn-primary btn-sm" onClick={openForm}>
-            {ic("Plus", 15)} Add Physiotherapist
+            {ic("Plus", 15)} Add Health Care Professional
           </button>
         </div>
       </div>
@@ -207,7 +207,7 @@ export default function PhysiosPage({ token }) {
                         </button>
                         <button
                           className="iconBtn danger"
-                          title="Delete physiotherapist"
+                          title="Delete health care professional"
                           onClick={() => del(p._id, p.name)}
                           disabled={deleting === p._id}
                         >
@@ -218,7 +218,7 @@ export default function PhysiosPage({ token }) {
                   </tr>
                 ))}
                 {!filtered.length && (
-                  <tr><td colSpan={6} className="empty">No physiotherapists found</td></tr>
+                  <tr><td colSpan={6} className="empty">No health care professionals found</td></tr>
                 )}
               </tbody>
             </table>
@@ -227,7 +227,7 @@ export default function PhysiosPage({ token }) {
       </div>
 
       {viewing && (
-        <Modal title="Physiotherapist Details" onClose={() => setViewing(null)}>
+        <Modal title="Health Care Professional Details" onClose={() => setViewing(null)}>
           <div className="detailGrid">
             {[
               ["Full Name",     viewing.name],
@@ -312,7 +312,7 @@ export default function PhysiosPage({ token }) {
       )}
 
       {showForm && (
-        <Modal title="Create Physiotherapist Account" onClose={() => setShowForm(false)}>
+        <Modal title="Create Health Care Professional Account" onClose={() => setShowForm(false)}>
           <Field label="Full Name">
             <input
               placeholder="Dr. Amara Perera"
@@ -330,7 +330,7 @@ export default function PhysiosPage({ token }) {
             />
           </Field>
 
-          <Field label="Temporary Password" hint="Physiotherapist should change this after first login.">
+          <Field label="Temporary Password" hint="Health care professional should change this after first login.">
             <div className="pwdRow">
               <input
                 placeholder="Min 8 characters"

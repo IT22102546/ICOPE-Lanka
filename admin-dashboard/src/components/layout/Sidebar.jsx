@@ -14,7 +14,7 @@ const PowerIcon = (p) => (
 );
 
 export default function Sidebar({ activeView, setActiveView, user, onLogout, collapsed, onToggle, navItems = [] }) {
-  const roleLabel = user?.role === "PHYSIOTHERAPIST" ? "Physiotherapist" : "Super Admin";
+  const roleLabel = user?.role === "PHYSIOTHERAPIST" ? "Health Care Professional" : "Super Admin";
 
   return (
     <aside className={`sidebar${collapsed ? " sidebar--collapsed" : ""}`}>

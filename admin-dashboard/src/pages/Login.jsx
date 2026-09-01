@@ -9,7 +9,7 @@ import { RE_EMAIL } from "@/lib/utils";
 const BRAND_FEATURES = {
   SUPER_ADMIN: [
     { icon: "Shield", text: "Full platform oversight & control" },
-    { icon: "Users",  text: "Manage physiotherapist accounts"  },
+    { icon: "Users",  text: "Manage health care professional accounts"  },
     { icon: "Person", text: "View & assign all patient records" },
     { icon: "Chart",  text: "System-wide assessment analytics" },
   ],
@@ -46,7 +46,7 @@ export default function LoginPage({ onLogin, theme, toggleTheme }) {
         }),
       });
       if (data.user?.role !== role) {
-        throw new Error(`This account is not a ${role === "SUPER_ADMIN" ? "Super Admin" : "Physiotherapist"}`);
+        throw new Error(`This account is not a ${role === "SUPER_ADMIN" ? "Super Admin" : "Health Care Professional"}`);
       }
       onLogin(data.accessToken, data.user);
     } catch (e) {
@@ -77,7 +77,7 @@ export default function LoginPage({ onLogin, theme, toggleTheme }) {
 
           <div className={`loginRoleTag ${isAdmin ? "tag-admin" : "tag-physio"}`}>
             {isAdmin ? ic("Shield", 13) : ic("Steth", 13)}
-            <span>{isAdmin ? "Super Admin Portal" : "Physiotherapist Portal"}</span>
+            <span>{isAdmin ? "Super Admin Portal" : "Health Care Professional Portal"}</span>
           </div>
 
           <ul className="loginFeatures">
@@ -107,24 +107,24 @@ export default function LoginPage({ onLogin, theme, toggleTheme }) {
               className={`roleTab${!isAdmin ? " active" : ""}`}
               onClick={() => switchRole("PHYSIOTHERAPIST")}
             >
-              {ic("Steth", 14)} Physiotherapist
+              {ic("Steth", 14)} Health Care Professional
             </button>
             <div className={`roleTabIndicator${isAdmin ? "" : " right"}`} />
           </div>
 
           <h2 className="loginTitle">
-            {isAdmin ? "Admin Sign In" : "Physio Sign In"}
+            {isAdmin ? "Admin Sign In" : "Health Care Professional Sign In"}
           </h2>
           <p className="loginSub">
             {isAdmin
               ? "Sign in with your Super Admin credentials"
-              : "Sign in with your Physiotherapist account"}
+              : "Sign in with your Health Care Professional account"}
           </p>
 
           <Field label="Email Address">
             <input
               type="email"
-              placeholder={isAdmin ? "admin@icopelanka.com" : "physio@icopelanka.com"}
+              placeholder={isAdmin ? "admin@icopelanka.com" : "hcp@icopelanka.com"}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={onKey}
@@ -159,7 +159,7 @@ export default function LoginPage({ onLogin, theme, toggleTheme }) {
             onClick={submit}
             disabled={loading}
           >
-            {loading ? <><Spinner /> Signing in...</> : `Sign In as ${isAdmin ? "Super Admin" : "Physiotherapist"}`}
+            {loading ? <><Spinner /> Signing in...</> : `Sign In as ${isAdmin ? "Super Admin" : "Health Care Professional"}`}
           </button>
 
           <p className="loginNote">

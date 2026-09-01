@@ -13,7 +13,8 @@ Node.js + Express + MongoDB backend for ICOPE Lanka mobile and admin dashboard.
 
 - Use a `Database Access` user from Atlas, not your Atlas account login.
 - If the password contains special characters like `@`, `:`, `/`, `?`, or `#`, URL-encode them in `MONGODB_URI`.
-- Make sure your current IP is allowed under `Network Access`.
+- Make sure your current public IP is allowed under `Network Access` in Atlas.
+- If you change Wi-Fi, VPN, or network location, re-add the new IP before starting the backend.
 - A typical URI looks like:
 
 `mongodb+srv://your_db_user:your_db_password@icope-lanka.4fjggi7.mongodb.net/icope-lanka?retryWrites=true&w=majority&appName=ICOPE-Lanka`
